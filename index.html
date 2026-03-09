@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1a18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cantiere">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Giornale di Cantiere</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1a1a18;--paper:#f2ede3;--accent:#c8442a;--accent2:#2a6e4a;
+  --steel:#3d4f6e;--muted:#8a8070;--border:#d4c9b5;--white:#fdfaf5;
+  --shadow:rgba(26,26,24,0.1);--card:#ffffff;
+}
+html,body{height:100%;width:100%;font-family:'Syne',sans-serif;background:var(--paper);color:var(--ink);overflow:hidden;-webkit-tap-highlight-color:transparent;overscroll-behavior:none;}
+#app{display:flex;flex-direction:column;height:100dvh;width:100%;max-width:480px;margin:0 auto;background:var(--paper);overflow:hidden;position:relative;}
+
+/* SCREENS */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;transition:opacity .28s,transform .28s;opacity:0;pointer-events:none;z-index:1;}
+.screen.show{opacity:1;pointer-events:all;transform:translateX(0)!important;z-index:2;}
+.screen.slide-right{transform:translateX(100%);}
+.screen.slide-left{transform:translateX(-100%);}
+
+/* HEADER */
+header{height:54px;flex-shrink:0;background:var(--ink);color:var(--white);padding:0 16px;display:flex;align-items:center;justify-content:space-between;z-index:10;}
+.logo-title{font-family:'DM Serif Display',serif;font-size:17px;}
+.logo-sub{font-family:'DM Mono',monospace;font-size:8px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-top:1px;}
+.hdate{font-family:'DM Mono',monospace;font-size:9px;color:var(--border);text-align:right;line-height:1.6;}
+.back-btn{display:flex;align-items:center;gap:5px;background:none;border:none;color:var(--white);cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:8px 0;min-height:44px;}
+.back-btn svg{width:16px;height:16px;stroke:var(--white);flex-shrink:0;}
+
+/* BOTTOM NAV */
+nav{height:56px;flex-shrink:0;display:flex;background:var(--ink);z-index:10;padding-bottom:env(safe-area-inset-bottom,0);}
+nav button{flex:1;border:none;background:transparent;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.05em;text-transform:uppercase;color:#555;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:all .2s;border-top:2px solid transparent;min-height:44px;}
+nav button.active{color:var(--accent);border-top-color:var(--accent);}
+nav button svg{width:19px;height:19px;}
+
+/* HOME SCREEN */
+#screen-home{background:var(--ink);}
+.home-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px 10px;gap:10px;}
+.hero-icon{width:70px;height:70px;background:var(--accent);border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;box-shadow:0 8px 28px rgba(200,68,42,.4);}
+.hero-title{font-family:'DM Serif Display',serif;font-size:30px;color:var(--white);text-align:center;line-height:1.15;}
+.hero-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;text-align:center;}
+.home-actions{flex-shrink:0;padding:14px 20px max(28px, env(safe-area-inset-bottom,28px));display:flex;flex-direction:column;gap:10px;}
+.btn-new{width:100%;padding:15px;border:none;border-radius:12px;background:var(--accent);color:white;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .18s;min-height:52px;}
+.btn-new:active{opacity:.8;transform:scale(.98);}
+.recent-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;padding:0 2px;}
+.recent-list{display:flex;flex-direction:column;gap:7px;max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.recent-item{background:#1f1f1c;border:1px solid #333;border-radius:10px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .15s;min-height:64px;}
+.recent-item:active{border-color:var(--accent);}
+.ri-icon{width:34px;height:34px;background:var(--steel);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ri-body{flex:1;min-width:0;}
+.ri-name{color:var(--white);font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ri-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px;}
+.ri-del{background:none;border:none;color:#555;font-size:18px;padding:8px;cursor:pointer;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ri-del:active{color:var(--accent);}
+
+/* NEW CANTIERE */
+#screen-new-c{background:var(--paper);}
+.form-screen{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;padding:14px 16px max(20px,env(safe-area-inset-bottom,20px));gap:10px;}
+.screen-title{font-family:'DM Serif Display',serif;font-size:22px;flex-shrink:0;}
+.screen-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;margin-top:-4px;flex-shrink:0;}
+
+/* FORM */
+.fg{display:flex;flex-direction:column;gap:3px;}
+.fg.grow{flex:1;min-height:0;}
+.frow{display:flex;gap:9px;}
+.frow .fg{flex:1;}
+label,.lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+input[type=text],input[type=date],input[type=time],input[type=number],textarea,select{
+  width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;
+  font-family:'Syne',sans-serif;font-size:14px;background:var(--white);color:var(--ink);
+  outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none;
+  min-height:44px;
+}
+input:focus,textarea:focus{border-color:var(--accent);}
+textarea{resize:none;flex:1;min-height:80px;line-height:1.55;}
+.primary-btn{width:100%;padding:14px;border:none;border-radius:10px;background:var(--accent);color:white;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .18s;flex-shrink:0;min-height:52px;}
+.primary-btn:active{opacity:.8;transform:scale(.98);}
+.secondary-btn{width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-weight:600;font-size:13px;cursor:pointer;flex-shrink:0;min-height:48px;}
+
+/* MAIN APP */
+#screen-app{background:var(--paper);}
+.cic{background:var(--ink);padding:8px 14px;display:flex;align-items:center;gap:9px;flex-shrink:0;}
+.cic-icon{width:28px;height:28px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cic-name{flex:1;color:var(--white);font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cic-meta{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);}
+.cic-change{background:none;border:1px solid #444;border-radius:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:8px;padding:5px 9px;cursor:pointer;letter-spacing:.05em;text-transform:uppercase;flex-shrink:0;min-height:32px;}
+.cic-change:active{border-color:var(--accent);color:var(--accent);}
+
+#main{flex:1;overflow:hidden;position:relative;}
+.tab-panel{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .22s;display:flex;flex-direction:column;}
+.tab-panel.active{opacity:1;pointer-events:all;}
+
+/* STEP DOTS */
+.step-dots{height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--paper);}
+.step-dot{width:7px;height:7px;border-radius:50%;background:var(--border);cursor:pointer;transition:all .2s;min-width:22px;min-height:22px;display:flex;align-items:center;justify-content:center;}
+.step-dot::after{content:'';width:7px;height:7px;border-radius:50%;background:var(--border);transition:all .2s;display:block;}
+.step-dot.active::after{background:var(--accent);transform:scale(1.35);}
+.step-dot.done::after{background:var(--accent2);}
+
+/* SWIPE */
+.swipe-wrap{flex:1;overflow:hidden;position:relative;}
+.swipe-track{display:flex;height:100%;transition:transform .35s cubic-bezier(.25,.46,.45,.94);will-change:transform;}
+.swipe-page{min-width:100%;width:100%;height:100%;display:flex;flex-direction:column;padding:10px 14px;gap:9px;overflow:hidden;}
+
+/* CARDS */
+.card{background:var(--card);border-radius:10px;padding:10px 12px;border:1px solid var(--border);box-shadow:0 1px 5px var(--shadow);display:flex;flex-direction:column;gap:7px;}
+.ctitle{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:5px;}
+.cdot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+
+/* GPS */
+.gps-bar{background:var(--ink);border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.gps-ico{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.gps-t{flex:1;min-width:0;}
+.gps-c{font-family:'DM Mono',monospace;font-size:11px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gps-s{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px;}
+.gps-s.ok{color:#5cb85c;}.gps-s.err{color:var(--accent);}
+.gps-btn{background:var(--accent);color:white;border:none;border-radius:8px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;flex-shrink:0;min-height:38px;}
+.gps-btn:active{opacity:.7;}
+
+/* PILLS */
+.pills{display:flex;flex-wrap:wrap;gap:6px;}
+.pill{padding:6px 12px;border-radius:16px;border:1.5px solid var(--border);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;background:var(--white);color:var(--ink);white-space:nowrap;min-height:34px;display:flex;align-items:center;}
+.pill.sel{background:var(--steel);color:white;border-color:var(--steel);}
+
+/* STEP HEADER */
+.shdr{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.stitle{font-family:'DM Serif Display',serif;font-size:16px;}
+.sof{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:.07em;margin-top:1px;}
+.snav{display:flex;gap:6px;}
+.snbtn{width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.snbtn:active{background:var(--accent);border-color:var(--accent);}
+.snbtn:active svg{stroke:white;}
+.snbtn[disabled]{opacity:.3;pointer-events:none;}
+.snbtn svg{width:14px;height:14px;stroke:var(--ink);}
+
+/* WORKERS */
+.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;}
+.wcell{background:var(--paper);border:1.5px solid var(--border);border-radius:9px;padding:9px 11px;display:flex;flex-direction:column;gap:6px;}
+.wnrow{display:flex;align-items:center;gap:7px;}
+.wnrow input{width:56px;padding:7px 6px;font-size:16px;font-weight:700;text-align:center;border-radius:7px;min-height:40px;}
+.wav{width:28px;height:28px;border-radius:50%;background:var(--steel);color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* PROG */
+.pw{background:var(--border);border-radius:4px;height:5px;}
+.pb{height:5px;border-radius:4px;background:var(--accent2);transition:width .4s;}
+
+/* RECORDER */
+.recscr{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.reccircle{width:82px;height:82px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;background:var(--accent);transition:all .2s;box-shadow:0 6px 28px rgba(200,68,42,.4);}
+.reccircle.on{background:#d94040;animation:pr 1.1s ease-in-out infinite;}
+@keyframes pr{0%{box-shadow:0 0 0 0 rgba(217,64,64,.5)}70%{box-shadow:0 0 0 22px rgba(217,64,64,0)}100%{box-shadow:0 0 0 0 rgba(217,64,64,0)}}
+.rectimer{font-family:'DM Mono',monospace;font-size:38px;font-weight:500;letter-spacing:.05em;}
+.rechint{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+.waveform{display:flex;align-items:center;gap:3px;height:28px;}
+.wb{width:4px;background:var(--accent);border-radius:2px;animation:wv .9s ease-in-out infinite;}
+.wb:nth-child(2){animation-delay:.1s}.wb:nth-child(3){animation-delay:.2s}
+.wb:nth-child(4){animation-delay:.3s}.wb:nth-child(5){animation-delay:.2s}
+.wb:nth-child(6){animation-delay:.1s}
+@keyframes wv{0%,100%{height:4px;opacity:.4}50%{height:22px;opacity:1}}
+.waveform.hide{visibility:hidden;}
+
+/* AUDIO LIST */
+.alist{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:7px;}
+.aitem{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--white);border:1px solid var(--border);border-radius:9px;flex-shrink:0;}
+.aplay{width:38px;height:38px;border-radius:50%;background:var(--steel);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;transition:background .2s;}
+.aplay:active{background:var(--accent);}
+.astop{background:var(--accent)!important;}
+.ameta{flex:1;min-width:0;}
+.aname{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.adur{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
+.adel{background:none;border:none;cursor:pointer;color:var(--muted);padding:8px;font-size:16px;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;}
+.adel:active{color:var(--accent);}
+
+/* PHOTOS */
+.pdrop{border:2px dashed var(--border);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;padding:18px;flex-shrink:0;transition:border-color .2s;min-height:80px;}
+.pdrop:active{border-color:var(--accent);}
+.pgrid{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:1fr 1fr;gap:8px;align-content:start;}
+.pthumb{position:relative;border-radius:9px;overflow:hidden;aspect-ratio:4/3;background:var(--border);}
+.pthumb img{width:100%;height:100%;object-fit:cover;}
+.pdelbtn{position:absolute;top:5px;right:5px;width:26px;height:26px;background:rgba(0,0,0,.65);border:none;border-radius:50%;color:white;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.pcap{position:absolute;bottom:0;left:0;right:0;padding:4px 7px;background:linear-gradient(transparent,rgba(0,0,0,.55));color:white;font-family:'DM Mono',monospace;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ARCHIVIO */
+.sbar{display:flex;gap:7px;flex-shrink:0;}
+.sbox{flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:9px 6px;text-align:center;}
+.sn{font-family:'DM Serif Display',serif;font-size:26px;color:var(--accent);line-height:1;}
+.sl{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+.rlist{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:8px;}
+.ritem{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 12px;cursor:pointer;display:flex;align-items:flex-start;gap:9px;box-shadow:0 1px 4px var(--shadow);transition:transform .15s;flex-shrink:0;}
+.ritem:active{transform:scale(.98);}
+.rico{width:36px;height:36px;background:var(--ink);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.rbody{flex:1;min-width:0;}
+.rtitle{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rmeta{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px;}
+.rbadge{padding:3px 7px;border-radius:10px;font-family:'DM Mono',monospace;font-size:8px;text-transform:uppercase;flex-shrink:0;}
+.b-open{background:#fff3e0;color:#e65100;border:1px solid #ffcc80;}
+.b-done{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;}
+
+/* EMPTY */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;flex:1;color:var(--muted);}
+.empty-ico{font-size:34px;}
+.empty p{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.05em;text-align:center;}
+
+/* ── MODALS ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px max(28px,env(safe-area-inset-bottom,28px));animation:mUp .3s ease;}
+@keyframes mUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mhandle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 14px;}
+.mtitle{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:8px;}
+.mf{margin-bottom:9px;}
+.mf .lbl{display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;}
+.mval{font-size:13px;line-height:1.55;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;background:var(--paper);border-radius:9px;padding:10px;margin-bottom:11px;}
+.warn-block{background:#fff3e0;border-radius:9px;padding:10px;margin-bottom:10px;}
+.warn-block .lbl{color:#e65100;}
+.mbtn{width:100%;padding:13px;border:none;border-radius:9px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:.15s;min-height:48px;}
+.mbtn.g{background:var(--accent2);color:white;}
+.mbtn.r{background:transparent;border:1.5px solid var(--border);color:var(--muted);}
+.mbtn:active{opacity:.8;}
+
+/* ── UPDATE POPUP ── */
+#update-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
+#update-overlay.open{display:flex;}
+.update-box{background:var(--white);border-radius:18px;padding:24px 20px;max-width:360px;width:100%;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.update-badge{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:white;border-radius:20px;padding:4px 12px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;}
+.update-title{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:6px;}
+.update-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em;margin-bottom:14px;}
+.update-items{display:flex;flex-direction:column;gap:7px;margin-bottom:18px;}
+.update-item{display:flex;align-items:flex-start;gap:9px;font-size:13px;line-height:1.4;}
+.update-item::before{content:'✓';color:var(--accent2);font-weight:700;flex-shrink:0;margin-top:1px;}
+.update-ok{width:100%;padding:13px;border:none;border-radius:10px;background:var(--ink);color:white;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;}
+.update-ok:active{opacity:.8;}
+
+/* TOAST */
+#toast{position:fixed;bottom:calc(60px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);color:white;padding:9px 18px;border-radius:20px;font-family:'DM Mono',monospace;font-size:11px;opacity:0;transition:all .28s;z-index:999;white-space:nowrap;pointer-events:none;max-width:90vw;text-align:center;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* OFFLINE BADGE */
+#offline-badge{position:fixed;top:58px;left:50%;transform:translateX(-50%);background:#d94040;color:white;padding:5px 14px;border-radius:12px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.06em;z-index:500;display:none;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+#offline-badge.show{display:block;}
+
+#filephoto{display:none;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- OFFLINE BADGE -->
+  <div id="offline-badge">● OFFLINE</div>
+
+  <!-- ═══════════════════════════
+       HOME — SELEZIONE CANTIERE
+  ════════════════════════════ -->
+  <div class="screen show" id="screen-home">
+    <div class="home-hero">
+      <div class="hero-icon">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div class="hero-title">Giornale<br>di Cantiere</div>
+      <div class="hero-sub" id="hdate-home"></div>
+    </div>
+    <div class="home-actions">
+      <button class="btn-new" onclick="goNewCantiere()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuovo Cantiere
+      </button>
+      <div id="recent-section" style="display:none;display:flex;flex-direction:column;gap:8px;">
+        <div class="recent-label">Cantieri esistenti</div>
+        <div class="recent-list" id="recent-list"></div>
+      </div>
+      <div id="no-cantieri" style="display:none;">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;padding:12px 0;letter-spacing:.06em;">Nessun cantiere salvato</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       NUOVO CANTIERE
+  ════════════════════════════ -->
+  <div class="screen slide-right" id="screen-new-c">
+    <header>
+      <button class="back-btn" onclick="goHome()">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        Indietro
+      </button>
+    </header>
+    <div class="form-screen">
+      <div class="screen-title">Nuovo Cantiere</div>
+      <div class="screen-sub">Inserisci i dati generali del cantiere</div>
+      <div class="fg"><label>Nome / Codice Cantiere *</label><input type="text" id="nc-nome" placeholder="Es. Palazzina Via Roma 12" autocomplete="off"></div>
+      <div class="fg"><label>Committente</label><input type="text" id="nc-committente" placeholder="Es. Mario Rossi S.r.l." autocomplete="off"></div>
+      <div class="fg"><label>Indirizzo</label><input type="text" id="nc-indirizzo" placeholder="Via, città..." autocomplete="off"></div>
+      <div class="frow">
+        <div class="fg"><label>Data inizio</label><input type="date" id="nc-data-inizio"></div>
+        <div class="fg"><label>Fine prevista</label><input type="date" id="nc-data-fine"></div>
+      </div>
+      <div class="fg"><label>Direttore Lavori / Responsabile</label><input type="text" id="nc-dl" placeholder="Nome e cognome" autocomplete="off"></div>
+      <div class="fg"><label>Note iniziali</label><textarea id="nc-note" placeholder="Descrizione generale, tipologia lavori..."></textarea></div>
+      <button class="primary-btn" onclick="createCantiere()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Crea e Apri Cantiere
+      </button>
+      <button class="secondary-btn" onclick="goHome()">Annulla</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       APP PRINCIPALE
+  ════════════════════════════ -->
+  <div class="screen slide-right" id="screen-app">
+    <header>
+      <div>
+        <div class="logo-title">Giornale di Cantiere</div>
+        <div class="logo-sub">Field Report System</div>
+      </div>
+      <div class="hdate" id="hdate-app"></div>
+    </header>
+
+    <!-- CANTIERE BAR -->
+    <div class="cic">
+      <div class="cic-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div class="cic-name" id="cic-name">—</div>
+        <div class="cic-meta" id="cic-meta">—</div>
+      </div>
+      <button class="cic-change" onclick="goHome()">Cambia</button>
+    </div>
+
+    <div id="main">
+
+      <!-- ── TAB: REPORT ── -->
+      <div class="tab-panel active" id="tab-report">
+        <div class="step-dots" id="sdots">
+          <div class="step-dot active" onclick="goStep(0)"></div>
+          <div class="step-dot" onclick="goStep(1)"></div>
+          <div class="step-dot" onclick="goStep(2)"></div>
+          <div class="step-dot" onclick="goStep(3)"></div>
+          <div class="step-dot" onclick="goStep(4)"></div>
+        </div>
+        <div class="swipe-wrap">
+          <div class="swipe-track" id="strack">
+
+            <!-- P0: Giornata -->
+            <div class="swipe-page">
+              <div class="shdr">
+                <div><div class="stitle">Info Giornata</div><div class="sof">1 di 5</div></div>
+                <div class="snav">
+                  <button class="snbtn" id="prev0" onclick="goStep(currentStep-1)" disabled><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+                  <button class="snbtn" onclick="goStep(currentStep+1)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+                </div>
+              </div>
+              <div class="gps-bar">
+                <div class="gps-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+                <div class="gps-t">
+                  <div class="gps-c" id="gps-display">-- , --</div>
+                  <div class="gps-s" id="gps-sub">Non rilevate</div>
+                </div>
+                <button class="gps-btn" id="gps-btn" onclick="getGPS()">📍 Rileva</button>
+              </div>
+              <div class="frow">
+                <div class="fg"><label>Data</label><input type="date" id="r-data"></div>
+                <div class="fg"><label>Ora</label><input type="time" id="r-ora"></div>
+              </div>
+              <div class="fg"><label>Direttore Lavori presente</label><input type="text" id="r-dl" placeholder="Nome e cognome" autocomplete="off"></div>
+              <div class="fg grow"><label>Note apertura giornata</label><textarea id="r-apertura" placeholder="Stato cantiere, prescrizioni, istruzioni..."></textarea></div>
+            </div>
+
+            <!-- P1: Meteo -->
+            <div class="swipe-page">
+              <div class="shdr">
+                <div><div class="stitle">Meteo & Avanzamento</div><div class="sof">2 di 5</div></div>
+                <div class="snav">
+                  <button class="snbtn" onclick="goStep(currentStep-1)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+                  <button class="snbtn" onclick="goStep(currentStep+1)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+                </div>
+              </div>
+              <div class="card" style="flex-shrink:0;">
+                <div class="ctitle"><div class="cdot"></div>Condizioni atmosferiche</div>
+                <div class="pills" id="meteo-pills">
+                  <div class="pill sel" onclick="selPill(this)">☀️ Sole</div>
+                  <div class="pill" onclick="selPill(this)">⛅ Nuvoloso</div>
+                  <div class="pill" onclick="selPill(this)">🌧️ Pioggia</div>
+                  <div class="pill" onclick="selPill(this)">⛈️ Temporale</div>
+                  <div class="pill" onclick="selPill(this)">🌬️ Vento</div>
+                  <div class="pill" onclick="selPill(this)">🌫️ Nebbia</div>
+                  <div class="pill" onclick="selPill(this)">❄️ Neve</div>
+                </div>
+                <div class="frow">
+                  <div class="fg"><label>Temp °C</label><input type="number" id="r-temp" placeholder="18" inputmode="decimal"></div>
+                  <div class="fg"><label>Vento km/h</label><input type="number" id="r-vento" placeholder="10" inputmode="numeric"></div>
+                </div>
+              </div>
+              <div class="card" style="flex:1;min-height:0;">
+                <div class="ctitle"><div class="cdot"></div>Avanzamento lavori</div>
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;">
+                  <div style="font-family:'DM Serif Display',serif;font-size:54px;text-align:center;color:var(--accent);line-height:1;" id="prog-display">0%</div>
+                  <input type="range" id="r-avanzamento" min="0" max="100" value="0" style="width:100%;accent-color:var(--accent);height:6px;border:none;background:transparent;padding:0;cursor:pointer;" oninput="updateProg(this.value)">
+                  <div class="pw"><div class="pb" id="prog-bar" style="width:0%"></div></div>
+                </div>
+                <div class="fg" style="flex-shrink:0;"><label>Ore lavorate totali</label><input type="text" id="r-ore" placeholder="Es. 56 ore" inputmode="numeric"></div>
+              </div>
+            </div>
+
+            <!-- P2: Lavori -->
+            <div class="swipe-page">
+              <div class="shdr">
+                <div><div class="stitle">Lavori & Anomalie</div><div class="sof">3 di 5</div></div>
+                <div class="snav">
+                  <button class="snbtn" onclick="goStep(currentStep-1)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+                  <button class="snbtn" onclick="goStep(currentStep+1)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+                </div>
+              </div>
+              <div class="fg grow" style="flex:1.6;"><label>Descrizione lavori eseguiti</label><textarea id="r-lavori" placeholder="Attività svolte, lavorazioni, fasi di avanzamento..."></textarea></div>
+              <div class="fg grow" style="flex:1;"><label>Problemi / Anomalie ⚠️</label><textarea id="r-problemi" placeholder="Problemi, sospensioni, situazioni di pericolo..."></textarea></div>
+            </div>
+
+            <!-- P3: Personale -->
+            <div class="swipe-page">
+              <div class="shdr">
+                <div><div class="stitle">Personale Presente</div><div class="sof">4 di 5</div></div>
+                <div class="snav">
+                  <button class="snbtn" onclick="goStep(currentStep-1)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+                  <button class="snbtn" onclick="goStep(currentStep+1)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+                </div>
+              </div>
+              <div class="wgrid">
+                <div class="wcell"><div class="lbl">Muratori</div><div class="wnrow"><div class="wav">M</div><input type="number" min="0" value="0" id="w-mur" inputmode="numeric"></div></div>
+                <div class="wcell"><div class="lbl">Carpentieri</div><div class="wnrow"><div class="wav">C</div><input type="number" min="0" value="0" id="w-car" inputmode="numeric"></div></div>
+                <div class="wcell"><div class="lbl">Elettricisti</div><div class="wnrow"><div class="wav">E</div><input type="number" min="0" value="0" id="w-ele" inputmode="numeric"></div></div>
+                <div class="wcell"><div class="lbl">Idraulici</div><div class="wnrow"><div class="wav">I</div><input type="number" min="0" value="0" id="w-idr" inputmode="numeric"></div></div>
+                <div class="wcell"><div class="lbl">Gruista / Op.</div><div class="wnrow"><div class="wav">G</div><input type="number" min="0" value="0" id="w-gru" inputmode="numeric"></div></div>
+                <div class="wcell"><div class="lbl">Altro</div><div class="wnrow"><div class="wav">+</div><input type="number" min="0" value="0" id="w-alt" inputmode="numeric"></div></div>
+              </div>
+              <div class="card" style="flex-shrink:0;align-items:center;gap:4px;">
+                <div class="ctitle"><div class="cdot"></div>Totale operai</div>
+                <div style="font-family:'DM Serif Display',serif;font-size:42px;color:var(--steel);line-height:1;" id="tot-workers">0</div>
+              </div>
+            </div>
+
+            <!-- P4: Materiali + Salva -->
+            <div class="swipe-page">
+              <div class="shdr">
+                <div><div class="stitle">Materiali & Note</div><div class="sof">5 di 5</div></div>
+                <div class="snav">
+                  <button class="snbtn" onclick="goStep(currentStep-1)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+                  <button class="snbtn" disabled><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+                </div>
+              </div>
+              <div class="fg grow" style="flex:1;"><label>Materiali consegnati / utilizzati</label><textarea id="r-materiali" placeholder="Es. 20 mc calcestruzzo cls 25/30, 500 kg ferro Fe 430..."></textarea></div>
+              <div class="fg grow" style="flex:1;"><label>Note & Osservazioni</label><textarea id="r-note" placeholder="Annotazioni, disposizioni per il giorno successivo..."></textarea></div>
+              <button class="primary-btn" onclick="saveReport()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Salva Report Giornaliero
+              </button>
+            </div>
+
+          </div><!-- end strack -->
+        </div>
+      </div><!-- end tab-report -->
+
+      <!-- ── TAB: VOCALI ── -->
+      <div class="tab-panel" id="tab-voice" style="padding:10px 14px;gap:9px;">
+        <div class="card" style="flex-shrink:0;">
+          <div class="ctitle"><div class="cdot"></div>Registra nota vocale</div>
+          <div class="recscr" style="padding:4px 0 8px;">
+            <div class="waveform hide" id="waveform">
+              <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+              <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+            </div>
+            <div class="rectimer" id="rec-timer">00:00</div>
+            <button class="reccircle" id="rec-btn" onclick="toggleRecord()">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+            </button>
+            <div class="rechint" id="rec-hint">Premi per registrare</div>
+          </div>
+          <div class="fg"><label>Etichetta nota</label><input type="text" id="voice-label" placeholder="Es. sopralluogo fondazioni" autocomplete="off"></div>
+        </div>
+        <div class="card" style="flex:1;min-height:0;overflow:hidden;">
+          <div class="ctitle"><div class="cdot"></div>Note registrate · <span id="voice-cant-lbl" style="color:var(--accent);"></span></div>
+          <div class="alist" id="audio-list">
+            <div class="empty"><div class="empty-ico">🎙️</div><p>Nessuna nota vocale</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: FOTO ── -->
+      <div class="tab-panel" id="tab-foto" style="padding:10px 14px;gap:9px;">
+        <input type="file" id="filephoto" accept="image/*" multiple onchange="handlePhotos(event)">
+        <div style="display:flex;gap:8px;flex-shrink:0;">
+          <div class="pdrop" style="flex:1;" onclick="openCamera()">
+            <div style="font-size:22px;">📷</div>
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.04em;text-align:center;">Fotocamera</div>
+          </div>
+          <div class="pdrop" style="flex:1;" onclick="openGallery()">
+            <div style="font-size:22px;">🖼️</div>
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.04em;text-align:center;">Galleria</div>
+          </div>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);flex-shrink:0;">
+          Cantiere: <span id="foto-cant-lbl" style="color:var(--accent);"></span>
+        </div>
+        <div class="pgrid" id="photo-grid">
+          <div class="empty" style="grid-column:span 2;"><div class="empty-ico">📷</div><p>Nessuna foto aggiunta</p></div>
+        </div>
+        <div class="fg" style="flex-shrink:0;"><label>Note sulle foto</label><input type="text" id="foto-note" placeholder="Contesto, area, fase lavori..." autocomplete="off"></div>
+      </div>
+
+      <!-- ── TAB: ARCHIVIO ── -->
+      <div class="tab-panel" id="tab-archivio" style="padding:10px 14px;gap:9px;">
+        <div class="sbar">
+          <div class="sbox"><div class="sn" id="stat-total">0</div><div class="sl">Report</div></div>
+          <div class="sbox"><div class="sn" id="stat-open">0</div><div class="sl">Aperti</div></div>
+          <div class="sbox"><div class="sn" id="stat-photos">0</div><div class="sl">Foto</div></div>
+          <div class="sbox"><div class="sn" id="stat-audio">0</div><div class="sl">Vocali</div></div>
+        </div>
+        <div class="rlist" id="reports-list">
+          <div class="empty"><div class="empty-ico">📁</div><p>Nessun report salvato</p></div>
+        </div>
+      </div>
+
+    </div><!-- end #main -->
+
+    <nav>
+      <button class="active" onclick="switchTab('report')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Report
+      </button>
+      <button onclick="switchTab('voice')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>Vocali
+      </button>
+      <button onclick="switchTab('foto')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Foto
+      </button>
+      <button onclick="switchTab('archivio')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>Archivio
+      </button>
+    </nav>
+  </div><!-- end screen-app -->
+
+</div><!-- end #app -->
+
+<!-- REPORT DETAIL MODAL -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal"><div class="mhandle"></div><div id="modal-body"></div></div>
+</div>
+
+<!-- UPDATE POPUP -->
+<div id="update-overlay">
+  <div class="update-box">
+    <div class="update-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+      Aggiornamento
+    </div>
+    <div class="update-title" id="update-title">Novità disponibili</div>
+    <div class="update-sub" id="update-version">Versione —</div>
+    <div class="update-items" id="update-items"></div>
+    <button class="update-ok" onclick="dismissUpdate()">Ho capito, continua →</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════
+//  APP VERSION — deve corrispondere a sw.js
+// ═══════════════════════════════════
+const APP_VERSION = '1.0.0';
+
+// ═══════════════════════════════════
+//  STATE
+// ═══════════════════════════════════
+function loadCantieri(){try{return JSON.parse(localStorage.getItem('gc_cantieri')||'{}')}catch{return{}}}
+function saveCantieri(c){localStorage.setItem('gc_cantieri',JSON.stringify(c))}
+
+let cantieri = loadCantieri();
+let activeCantiere = null;
+let sessionAudios = {}; // cantiereId -> [{blob,url,label,dur}]
+let currentAudio = null; // currently playing HTMLAudioElement
+let currentAudioIdx = null;
+let mediaRecorder = null, recChunks = [], recInt = null, recSec = 0, isRec = false;
+let gpsCoords = null, gpsWatchId = null;
+let currentStep = 0;
+const STEPS = 5;
+
+// ═══════════════════════════════════
+//  PWA — Service Worker registration
+// ═══════════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            // New SW installed but not yet active — will activate on next load
+          }
+        });
+      });
+    });
+    // Listen for messages from SW (new version activated)
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data && e.data.type === 'NEW_VERSION') {
+        handleNewVersion(e.data.version, e.data.changelog);
+      }
+    });
+  });
+}
+
+// ═══════════════════════════════════
+//  UPDATE POPUP
+// ═══════════════════════════════════
+function handleNewVersion(version, changelog) {
+  const seenKey = 'gc_seen_v' + version;
+  if (localStorage.getItem(seenKey)) return; // already shown
+
+  document.getElementById('update-version').textContent = 'Versione ' + version;
+  if (changelog) {
+    document.getElementById('update-title').textContent = changelog.title || 'Aggiornamento disponibile';
+    document.getElementById('update-items').innerHTML =
+      (changelog.items || []).map(i => `<div class="update-item">${i}</div>`).join('');
+  }
+  document.getElementById('update-overlay').classList.add('open');
+}
+
+function dismissUpdate() {
+  document.getElementById('update-overlay').classList.remove('open');
+  const version = document.getElementById('update-version').textContent.replace('Versione ','');
+  localStorage.setItem('gc_seen_v' + version, '1');
+}
+
+// Show on very first install too
+window.addEventListener('load', () => {
+  const seenKey = 'gc_seen_v' + APP_VERSION;
+  if (!localStorage.getItem(seenKey) && !localStorage.getItem('gc_cantieri')) {
+    // First ever launch — show welcome
+    setTimeout(() => {
+      handleNewVersion(APP_VERSION, {
+        title: '👋 Benvenuto!',
+        items: [
+          'Crea e gestisci più cantieri separati',
+          'Report giornaliero in 5 sezioni swipeable',
+          'Note vocali registrate direttamente in app',
+          'Foto con fotocamera o galleria',
+          'Rilevamento GPS automatico',
+          'Archivio completo per cantiere',
+          'Funziona completamente offline'
+        ]
+      });
+    }, 800);
+  }
+});
+
+// ═══════════════════════════════════
+//  OFFLINE DETECTION
+// ═══════════════════════════════════
+function updateOnlineStatus() {
+  document.getElementById('offline-badge').classList.toggle('show', !navigator.onLine);
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
+
+// ═══════════════════════════════════
+//  INIT
+// ═══════════════════════════════════
+(function init() {
+  const now = new Date();
+  const opts = { weekday:'long', day:'numeric', month:'long' };
+  const dateStr = now.toLocaleDateString('it-IT', opts);
+  document.getElementById('hdate-home').textContent = dateStr;
+  document.getElementById('hdate-app').innerHTML =
+    now.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'}) + '<br>' + now.getFullYear();
+  document.getElementById('r-data').value = now.toISOString().split('T')[0];
+  document.getElementById('r-ora').value = now.toTimeString().slice(0,5);
+  document.getElementById('nc-data-inizio').value = now.toISOString().split('T')[0];
+
+  renderHomeList();
+  setupSwipe();
+  setupWorkerListeners();
+})();
+
+// ═══════════════════════════════════
+//  HOME
+// ═══════════════════════════════════
+function renderHomeList() {
+  const ids = Object.keys(cantieri).sort((a,b) => (cantieri[b].createdAt||0)-(cantieri[a].createdAt||0));
+  const sec = document.getElementById('recent-section');
+  const noC = document.getElementById('no-cantieri');
+  if (!ids.length) { sec.style.display='none'; noC.style.display='block'; return; }
+  sec.style.display='flex'; noC.style.display='none';
+  document.getElementById('recent-list').innerHTML = ids.map(id => {
+    const c = cantieri[id];
+    const nr = (c.reports||[]).length;
+    const nf = (c.photos||[]).length;
+    const na = (c.audioMeta||[]).length;
+    const d = c.dataInizio ? new Date(c.dataInizio).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'}) : '—';
+    return `<div class="recent-item" onclick="openCantiere('${id}')">
+      <div class="ri-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+      <div class="ri-body">
+        <div class="ri-name">${c.nome}</div>
+        <div class="ri-meta">${c.committente||'—'} · Dal ${d}</div>
+        <div class="ri-meta">📋 ${nr} report · 📸 ${nf} foto · 🎙️ ${na} vocali</div>
+      </div>
+      <button class="ri-del" onclick="event.stopPropagation();deleteCantiere('${id}')" title="Elimina cantiere">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function deleteCantiere(id) {
+  if (!confirm('Eliminare il cantiere "'+cantieri[id].nome+'" e tutti i suoi dati?')) return;
+  delete cantieri[id];
+  delete sessionAudios[id];
+  saveCantieri(cantieri);
+  renderHomeList();
+  showToast('Cantiere eliminato');
+}
+
+// ═══════════════════════════════════
+//  SCREEN NAVIGATION
+// ═══════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('show');
+    if (s.id !== id) { s.classList.add('slide-right'); s.classList.remove('slide-left'); }
+  });
+  const s = document.getElementById(id);
+  s.classList.remove('slide-right','slide-left');
+  s.classList.add('show');
+}
+function goHome() { renderHomeList(); showScreen('screen-home'); }
+function goNewCantiere() { showScreen('screen-new-c'); }
+
+// ═══════════════════════════════════
+//  CANTIERE CRUD
+// ═══════════════════════════════════
+function createCantiere() {
+  const nome = document.getElementById('nc-nome').value.trim();
+  if (!nome) { showToast('⚠️ Inserisci il nome del cantiere'); return; }
+  const id = 'c_' + Date.now();
+  cantieri[id] = {
+    id, nome,
+    committente: document.getElementById('nc-committente').value.trim(),
+    indirizzo: document.getElementById('nc-indirizzo').value.trim(),
+    dataInizio: document.getElementById('nc-data-inizio').value,
+    dataFine: document.getElementById('nc-data-fine').value,
+    dl: document.getElementById('nc-dl').value.trim(),
+    note: document.getElementById('nc-note').value.trim(),
+    createdAt: Date.now(),
+    reports: [], photos: [], audioMeta: []
+  };
+  saveCantieri(cantieri);
+  ['nc-nome','nc-committente','nc-indirizzo','nc-dl','nc-note'].forEach(f=>document.getElementById(f).value='');
+  document.getElementById('nc-data-fine').value='';
+  openCantiere(id);
+}
+
+function openCantiere(id) {
+  activeCantiere = id;
+  const c = cantieri[id];
+  document.getElementById('cic-name').textContent = c.nome;
+  const meta = [c.committente, c.indirizzo].filter(Boolean).join(' · ');
+  document.getElementById('cic-meta').textContent = meta || (c.dataInizio ? 'Dal '+new Date(c.dataInizio).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'}) : '—');
+  document.getElementById('voice-cant-lbl').textContent = c.nome;
+  document.getElementById('foto-cant-lbl').textContent = c.nome;
+  resetReportForm();
+  renderAudio(); renderPhotos(); updateArchivio();
+  showScreen('screen-app');
+  switchTab('report'); goStep(0);
+  // auto GPS on open
+  silentGPS();
+}
+
+function resetReportForm() {
+  const now = new Date();
+  document.getElementById('r-data').value = now.toISOString().split('T')[0];
+  document.getElementById('r-ora').value = now.toTimeString().slice(0,5);
+  ['r-dl','r-apertura','r-temp','r-vento','r-lavori','r-problemi','r-materiali','r-note','r-ore'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('r-avanzamento').value=0; updateProg(0);
+  ['w-mur','w-car','w-ele','w-idr','w-gru','w-alt'].forEach(id=>document.getElementById(id).value=0);
+  document.getElementById('tot-workers').textContent='0';
+  document.querySelectorAll('#meteo-pills .pill').forEach((p,i)=>p.classList.toggle('sel',i===0));
+  gpsCoords=null;
+  document.getElementById('gps-display').textContent='-- , --';
+  document.getElementById('gps-sub').textContent='Non rilevate';
+  document.getElementById('gps-sub').className='gps-s';
+  document.getElementById('gps-btn').textContent='📍 Rileva';
+}
+
+// ═══════════════════════════════════
+//  TABS + SWIPE STEPS
+// ═══════════════════════════════════
+function switchTab(t) {
+  ['report','voice','foto','archivio'].forEach((id,i)=>{
+    document.getElementById('tab-'+id).classList.toggle('active',id===t);
+    document.querySelectorAll('nav button')[i].classList.toggle('active',id===t);
+  });
+  if(t==='archivio') updateArchivio();
+}
+
+function goStep(n) {
+  if(n<0||n>=STEPS) return;
+  currentStep=n;
+  document.getElementById('strack').style.transform=`translateX(-${n*100}%)`;
+  document.querySelectorAll('.step-dot').forEach((d,i)=>{
+    d.classList.toggle('active',i===n); d.classList.toggle('done',i<n);
+  });
+  document.getElementById('prev0').disabled=(n===0);
+}
+
+function setupSwipe() {
+  const track=document.getElementById('strack');
+  let sx=0,drag=false,dx=0;
+  track.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;drag=true;dx=0;track.style.transition='none';},{passive:true});
+  track.addEventListener('touchmove',e=>{
+    if(!drag)return;
+    dx=e.touches[0].clientX-sx;
+    const pct=currentStep*100-(dx/track.parentElement.offsetWidth*100);
+    track.style.transform=`translateX(-${Math.max(0,Math.min((STEPS-1)*100,pct))}%)`;
+  },{passive:true});
+  track.addEventListener('touchend',()=>{
+    drag=false;track.style.transition='';
+    if(dx<-50&&currentStep<STEPS-1)goStep(currentStep+1);
+    else if(dx>50&&currentStep>0)goStep(currentStep-1);
+    else goStep(currentStep);
+  });
+}
+
+function setupWorkerListeners() {
+  ['w-mur','w-car','w-ele','w-idr','w-gru','w-alt'].forEach(id=>
+    document.getElementById(id).addEventListener('input',()=>{
+      const t=['w-mur','w-car','w-ele','w-idr','w-gru','w-alt'].reduce((s,i)=>s+(parseInt(document.getElementById(i).value)||0),0);
+      document.getElementById('tot-workers').textContent=t;
+    })
+  );
+}
+
+function updateProg(v) {
+  document.getElementById('prog-display').textContent=v+'%';
+  document.getElementById('prog-bar').style.width=v+'%';
+}
+
+// ═══════════════════════════════════
+//  GPS
+// ═══════════════════════════════════
+function silentGPS() {
+  if(!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(p=>{
+    gpsCoords={lat:p.coords.latitude.toFixed(6),lon:p.coords.longitude.toFixed(6),acc:Math.round(p.coords.accuracy)};
+    document.getElementById('gps-display').textContent=gpsCoords.lat+', '+gpsCoords.lon;
+    document.getElementById('gps-sub').className='gps-s ok';
+    document.getElementById('gps-sub').textContent='✓ Auto ±'+gpsCoords.acc+'m';
+    document.getElementById('gps-btn').textContent='✓ OK';
+  },()=>{},{enableHighAccuracy:true,timeout:8000,maximumAge:60000});
+}
+
+function getGPS() {
+  const btn=document.getElementById('gps-btn'),sub=document.getElementById('gps-sub');
+  btn.textContent='⏳'; sub.className='gps-s'; sub.textContent='Rilevamento...';
+  if(!navigator.geolocation){sub.className='gps-s err';sub.textContent='GPS non disponibile';btn.textContent='📍 Rileva';return;}
+  navigator.geolocation.getCurrentPosition(p=>{
+    const lat=p.coords.latitude.toFixed(6),lon=p.coords.longitude.toFixed(6),acc=Math.round(p.coords.accuracy);
+    gpsCoords={lat,lon,acc};
+    document.getElementById('gps-display').textContent=lat+', '+lon;
+    sub.className='gps-s ok';sub.textContent='✓ ±'+acc+'m';
+    btn.textContent='✓ OK';
+    showToast('📍 GPS rilevato: ±'+acc+'m');
+  },err=>{
+    sub.className='gps-s err';
+    sub.textContent=err.code===1?'Accesso negato':'Errore rilevamento';
+    btn.textContent='📍 Rileva';
+    showToast('⚠️ GPS: '+(err.code===1?'Permesso negato':'Timeout'));
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+}
+
+function selPill(el){document.querySelectorAll('#meteo-pills .pill').forEach(p=>p.classList.remove('sel'));el.classList.add('sel');}
+
+// ═══════════════════════════════════
+//  VOICE RECORDER
+// ═══════════════════════════════════
+async function toggleRecord() {
+  if(!activeCantiere){showToast('⚠️ Seleziona un cantiere');return;}
+  if(!isRec){
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true,echoCancellation:true,noiseSuppression:true});
+      // pick best supported format
+      const mimeType=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4',''].find(m=>!m||MediaRecorder.isTypeSupported(m));
+      mediaRecorder=new MediaRecorder(stream, mimeType?{mimeType}:{});
+      recChunks=[];recSec=0;
+      mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recChunks.push(e.data);};
+      mediaRecorder.onstop=()=>{
+        const ext=mimeType&&mimeType.includes('ogg')?'ogg':mimeType&&mimeType.includes('mp4')?'mp4':'webm';
+        const blob=new Blob(recChunks,{type:mimeType||'audio/webm'});
+        const label=document.getElementById('voice-label').value.trim()||('Nota '+(((sessionAudios[activeCantiere]||[]).length)+1+(cantieri[activeCantiere]?.audioMeta?.length||0)));
+        if(!sessionAudios[activeCantiere])sessionAudios[activeCantiere]=[];
+        const url=URL.createObjectURL(blob);
+        sessionAudios[activeCantiere].push({blob,label,dur:recSec,url,ext});
+        if(!cantieri[activeCantiere].audioMeta)cantieri[activeCantiere].audioMeta=[];
+        cantieri[activeCantiere].audioMeta.push({label,dur:recSec,ts:Date.now()});
+        saveCantieri(cantieri);
+        document.getElementById('voice-label').value='';
+        renderAudio();stream.getTracks().forEach(t=>t.stop());
+        showToast('✓ Nota vocale salvata ('+fmtDur(recSec)+')');
+      };
+      mediaRecorder.start(500);isRec=true;
+      document.getElementById('rec-btn').classList.add('on');
+      document.getElementById('rec-hint').textContent='In registrazione — ripremi per fermare';
+      document.getElementById('waveform').classList.remove('hide');
+      recInt=setInterval(()=>{recSec++;document.getElementById('rec-timer').textContent=fmtDur(recSec);},1000);
+    }catch(e){
+      showToast('⚠️ Microfono: '+(e.name==='NotAllowedError'?'permesso negato':'non accessibile'));
+    }
+  } else {
+    mediaRecorder.stop();isRec=false;clearInterval(recInt);
+    document.getElementById('rec-btn').classList.remove('on');
+    document.getElementById('rec-hint').textContent='Premi per registrare';
+    document.getElementById('rec-timer').textContent='00:00';
+    document.getElementById('waveform').classList.add('hide');
+  }
+}
+
+function fmtDur(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+
+function renderAudio(){
+  const el=document.getElementById('audio-list');
+  const sess=(activeCantiere&&sessionAudios[activeCantiere])||[];
+  const meta=(activeCantiere&&cantieri[activeCantiere]?.audioMeta)||[];
+  const sessLabels=new Set(sess.map(a=>a.label));
+  const hist=meta.filter(m=>!sessLabels.has(m.label));
+
+  if(!sess.length&&!hist.length){el.innerHTML='<div class="empty"><div class="empty-ico">🎙️</div><p>Nessuna nota vocale registrata</p></div>';return;}
+
+  const sessHtml=sess.map((a,i)=>`
+    <div class="aitem">
+      <button class="aplay" id="aplay-${i}" onclick="playAudio(${i})">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </button>
+      <div class="ameta"><div class="aname">${a.label}</div><div class="adur">${fmtDur(a.dur)} · Sessione corrente</div></div>
+      <button class="adel" onclick="delAudio(${i})">🗑</button>
+    </div>`).join('');
+
+  const histHtml=hist.map(m=>`
+    <div class="aitem" style="opacity:.65;">
+      <div style="width:38px;height:38px;border-radius:50%;background:#ccc;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="#666"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/></svg>
+      </div>
+      <div class="ameta"><div class="aname">${m.label}</div><div class="adur">${fmtDur(m.dur)} · Sessione precedente</div></div>
+    </div>`).join('');
+
+  el.innerHTML=sessHtml+histHtml;
+}
+
+let playingIdx = null;
+function playAudio(i) {
+  if(!activeCantiere||!sessionAudios[activeCantiere])return;
+  const a=sessionAudios[activeCantiere][i];
+  if(!a)return;
+  if(currentAudio&&!currentAudio.paused){
+    currentAudio.pause();
+    if(playingIdx===i){
+      updatePlayBtn(i,false); playingIdx=null; currentAudio=null; return;
+    }
+    if(playingIdx!==null)updatePlayBtn(playingIdx,false);
+  }
+  currentAudio=new Audio(a.url);
+  currentAudio.play().then(()=>{updatePlayBtn(i,true);playingIdx=i;});
+  currentAudio.onended=()=>{updatePlayBtn(i,false);playingIdx=null;currentAudio=null;};
+}
+function updatePlayBtn(i,playing){
+  const btn=document.getElementById('aplay-'+i);
+  if(!btn)return;
+  btn.innerHTML=playing
+    ?'<svg width="12" height="12" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+    :'<svg width="12" height="12" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+}
+function delAudio(i){
+  if(!activeCantiere)return;
+  if(sessionAudios[activeCantiere]){sessionAudios[activeCantiere].splice(i,1);}
+  if(cantieri[activeCantiere]?.audioMeta){cantieri[activeCantiere].audioMeta.splice(i,1);}
+  saveCantieri(cantieri);renderAudio();updateArchivio();
+}
+
+// ═══════════════════════════════════
+//  PHOTOS
+// ═══════════════════════════════════
+let photoCapture = 'environment'; // camera or gallery
+
+function openCamera(){
+  photoCapture='environment';
+  const fi=document.getElementById('filephoto');
+  fi.removeAttribute('multiple');
+  fi.setAttribute('capture','environment');
+  fi.click();
+}
+function openGallery(){
+  photoCapture='gallery';
+  const fi=document.getElementById('filephoto');
+  fi.setAttribute('multiple','');
+  fi.removeAttribute('capture');
+  fi.click();
+}
+
+function handlePhotos(e){
+  if(!activeCantiere){showToast('⚠️ Seleziona un cantiere');return;}
+  const files=Array.from(e.target.files);
+  if(!files.length)return;
+  let done=0;
+  files.forEach(f=>{
+    if(!f.type.startsWith('image/')){done++;return;}
+    // Resize before storing to save space
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        const MAX=1280;
+        let w=img.width,h=img.height;
+        if(w>MAX||h>MAX){const r=Math.min(MAX/w,MAX/h);w=Math.round(w*r);h=Math.round(h*r);}
+        const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        const src=cv.toDataURL('image/jpeg',0.82);
+        if(!cantieri[activeCantiere].photos)cantieri[activeCantiere].photos=[];
+        cantieri[activeCantiere].photos.push({src,name:f.name,ts:Date.now()});
+        saveCantieri(cantieri);
+        done++;
+        if(done===files.length){renderPhotos();updateArchivio();showToast('✓ '+files.length+' foto salvata'+(files.length>1?'':''));}
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(f);
+  });
+  e.target.value='';
+}
+
+function renderPhotos(){
+  const g=document.getElementById('photo-grid');
+  const photos=(activeCantiere&&cantieri[activeCantiere]?.photos)||[];
+  if(!photos.length){g.innerHTML='<div class="empty" style="grid-column:span 2;"><div class="empty-ico">📷</div><p>Nessuna foto aggiunta</p></div>';return;}
+  g.innerHTML=photos.map((p,i)=>`
+    <div class="pthumb">
+      <img src="${p.src}" loading="lazy">
+      <span class="pcap">${p.name}</span>
+      <button class="pdelbtn" onclick="delPhoto(${i})">✕</button>
+    </div>`).join('');
+}
+function delPhoto(i){
+  if(!activeCantiere)return;
+  cantieri[activeCantiere].photos.splice(i,1);
+  saveCantieri(cantieri);renderPhotos();updateArchivio();
+}
+
+// ═══════════════════════════════════
+//  SAVE REPORT
+// ═══════════════════════════════════
+function saveReport(){
+  if(!activeCantiere){showToast('⚠️ Nessun cantiere selezionato');return;}
+  const me=document.querySelector('#meteo-pills .pill.sel');
+  const wids=['w-mur','w-car','w-ele','w-idr','w-gru','w-alt'];
+  const wn=['Muratori','Carpentieri','Elettricisti','Idraulici','Gruista/Op.','Altro'];
+  const workers=wids.map((id,i)=>({name:wn[i],n:parseInt(document.getElementById(id).value)||0})).filter(w=>w.n>0);
+  const report={
+    id:Date.now(),
+    data:document.getElementById('r-data').value,
+    ora:document.getElementById('r-ora').value,
+    dl:document.getElementById('r-dl').value,
+    apertura:document.getElementById('r-apertura').value,
+    meteo:me?me.textContent:'N/D',
+    temp:document.getElementById('r-temp').value,
+    vento:document.getElementById('r-vento').value,
+    avanzamento:document.getElementById('r-avanzamento').value||'0',
+    ore:document.getElementById('r-ore').value,
+    lavori:document.getElementById('r-lavori').value,
+    problemi:document.getElementById('r-problemi').value,
+    materiali:document.getElementById('r-materiali').value,
+    note:document.getElementById('r-note').value,
+    gps:gpsCoords, workers,
+    totalWorkers:workers.reduce((s,w)=>s+w.n,0),
+    fotoCount:(cantieri[activeCantiere].photos||[]).length,
+    audioCount:(cantieri[activeCantiere].audioMeta||[]).length,
+    status:'aperto'
+  };
+  if(!cantieri[activeCantiere].reports)cantieri[activeCantiere].reports=[];
+  cantieri[activeCantiere].reports.unshift(report);
+  saveCantieri(cantieri);
+  updateArchivio();
+  showToast('✓ Report del '+new Date(report.data).toLocaleDateString('it-IT',{day:'numeric',month:'short'})+' salvato');
+  resetReportForm();
+  setTimeout(()=>switchTab('archivio'),800);
+}
+
+// ═══════════════════════════════════
+//  ARCHIVIO
+// ═══════════════════════════════════
+function updateArchivio(){
+  if(!activeCantiere)return;
+  const c=cantieri[activeCantiere];
+  const reports=c.reports||[];
+  const open=reports.filter(r=>r.status==='aperto').length;
+  document.getElementById('stat-total').textContent=reports.length;
+  document.getElementById('stat-open').textContent=open;
+  document.getElementById('stat-photos').textContent=(c.photos||[]).length;
+  document.getElementById('stat-audio').textContent=(c.audioMeta||[]).length;
+  const el=document.getElementById('reports-list');
+  if(!reports.length){el.innerHTML='<div class="empty"><div class="empty-ico">📁</div><p>Nessun report per questo cantiere</p></div>';return;}
+  el.innerHTML=reports.map((r,i)=>{
+    const d=new Date(r.data).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'});
+    return `<div class="ritem" onclick="showReport(${i})">
+      <div class="rico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div class="rbody">
+        <div class="rtitle">${d} — ${r.meteo}</div>
+        <div class="rmeta">${r.ora}${r.dl?' · DL: '+r.dl:''}</div>
+        <div class="rmeta">👷${r.totalWorkers} operai · avanz. ${r.avanzamento}%${r.gps?' · 📍GPS':''}</div>
+        <div style="margin-top:5px;"><div class="pw"><div class="pb" style="width:${r.avanzamento}%"></div></div></div>
+      </div>
+      <span class="rbadge ${r.status==='aperto'?'b-open':'b-done'}">${r.status}</span>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════
+//  REPORT MODAL
+// ═══════════════════════════════════
+function showReport(i){
+  if(!activeCantiere)return;
+  const c=cantieri[activeCantiere];const r=c.reports[i];
+  const d=new Date(r.data).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const wr=r.workers.length
+    ?r.workers.map(w=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee;font-family:'DM Mono',monospace;font-size:11px;"><span>${w.name}</span><strong>${w.n}</strong></div>`).join('')
+    :'<div style="color:#aaa;font-family:DM Mono,monospace;font-size:11px;">—</div>';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="mtitle">${c.nome}</div>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">${c.committente||''}</div>
+    <div class="mgrid">
+      <div class="mf"><span class="lbl">Data</span><div class="mval" style="font-size:11px;">${d}</div></div>
+      <div class="mf"><span class="lbl">Ora</span><div class="mval">${r.ora}</div></div>
+      <div class="mf"><span class="lbl">Meteo</span><div class="mval">${r.meteo}${r.temp?' '+r.temp+'°C':''}</div></div>
+      <div class="mf"><span class="lbl">Avanzamento</span><div class="mval">${r.avanzamento}%</div></div>
+      ${r.gps?`<div class="mf" style="grid-column:span 2"><span class="lbl">GPS</span><div class="mval" style="font-family:'DM Mono',monospace;font-size:11px;">${r.gps.lat}, ${r.gps.lon} <span style="color:var(--muted)">±${r.gps.acc}m</span></div></div>`:''}
+    </div>
+    ${r.apertura?`<div class="mf"><span class="lbl">Apertura giornata</span><div class="mval">${r.apertura}</div></div>`:''}
+    ${r.lavori?`<div class="mf"><span class="lbl">Lavori eseguiti</span><div class="mval">${r.lavori}</div></div>`:''}
+    ${r.problemi?`<div class="warn-block"><span class="lbl">⚠️ Anomalie</span><div class="mval">${r.problemi}</div></div>`:''}
+    <div class="mf"><span class="lbl">Personale — tot. ${r.totalWorkers}</span>${wr}</div>
+    ${r.ore?`<div class="mf"><span class="lbl">Ore lavorate</span><div class="mval">${r.ore}</div></div>`:''}
+    ${r.materiali?`<div class="mf"><span class="lbl">Materiali</span><div class="mval">${r.materiali}</div></div>`:''}
+    ${r.note?`<div class="mf"><span class="lbl">Note</span><div class="mval">${r.note}</div></div>`:''}
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      ${r.status==='aperto'?`<button class="mbtn g" style="flex:1" onclick="closeRep(${i})">✓ Chiudi report</button>`:''}
+      <button class="mbtn r" style="flex:1" onclick="delRep(${i})">🗑 Elimina</button>
+    </div>`;
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open');}
+function closeRep(i){cantieri[activeCantiere].reports[i].status='chiuso';saveCantieri(cantieri);updateArchivio();closeModal();showToast('✓ Report chiuso');}
+function delRep(i){cantieri[activeCantiere].reports.splice(i,1);saveCantieri(cantieri);updateArchivio();closeModal();showToast('Report eliminato');}
+
+// ═══════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════
+let toastTimer=null;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2400);
+}
+</script>
+</body>
+</html>
