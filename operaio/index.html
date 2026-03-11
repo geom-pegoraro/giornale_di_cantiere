@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1c2b1e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Report Cantiere">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Report Cantiere</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#1c2b1e;--green2:#2a6e4a;--green3:#3d8a5f;
+  --paper:#f0f4f0;--white:#fafcfa;--border:#c8d8c8;
+  --muted:#7a8f7a;--ink:#1a1f1a;--accent:#2a6e4a;
+  --warn:#c8442a;--shadow:rgba(26,40,26,0.1);
+}
+html,body{height:100%;width:100%;font-family:'Syne',sans-serif;background:var(--paper);color:var(--ink);overflow:hidden;-webkit-tap-highlight-color:transparent;overscroll-behavior:none;}
+#app{display:flex;flex-direction:column;height:100dvh;width:100%;max-width:480px;margin:0 auto;background:var(--paper);overflow:hidden;position:relative;}
+
+/* SCREENS */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;transition:opacity .26s,transform .26s;opacity:0;pointer-events:none;z-index:1;}
+.screen.show{opacity:1;pointer-events:all;transform:translateX(0)!important;z-index:2;}
+.screen.slide-right{transform:translateX(100%);}
+.screen.slide-left{transform:translateX(-100%);}
+
+/* HEADER */
+header{height:56px;flex-shrink:0;background:var(--green);color:var(--white);padding:0 16px;display:flex;align-items:center;justify-content:space-between;z-index:10;}
+.hlogo{display:flex;flex-direction:column;}
+.hlogo-t{font-family:'DM Serif Display',serif;font-size:16px;line-height:1.2;}
+.hlogo-s{font-family:'DM Mono',monospace;font-size:8px;color:var(--green3);letter-spacing:.15em;text-transform:uppercase;}
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:8px 0;min-height:44px;}
+.back-btn svg{width:16px;height:16px;stroke:currentColor;flex-shrink:0;}
+
+/* HOME */
+#screen-home{background:var(--green);}
+.home-top{padding:24px 20px 16px;display:flex;flex-direction:column;gap:6px;}
+.home-greeting{font-family:'DM Mono',monospace;font-size:10px;color:var(--green3);letter-spacing:.12em;text-transform:uppercase;}
+.home-name{font-family:'DM Serif Display',serif;font-size:28px;color:var(--white);line-height:1.1;}
+.home-role{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:5px 12px;font-family:'DM Mono',monospace;font-size:10px;color:var(--green3);text-transform:uppercase;letter-spacing:.08em;margin-top:4px;width:fit-content;}
+.home-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--paper);border-radius:20px 20px 0 0;padding:20px 16px max(20px,env(safe-area-inset-bottom,20px));display:flex;flex-direction:column;gap:12px;}
+.section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;padding:0 2px;}
+.cant-card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .15s;box-shadow:0 2px 8px var(--shadow);}
+.cant-card:active{transform:scale(.98);border-color:var(--accent);}
+.cant-icon{width:42px;height:42px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cant-icon svg{stroke:white;width:20px;height:20px;}
+.cant-body{flex:1;min-width:0;}
+.cant-name{font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cant-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:3px;}
+.cant-arrow{color:var(--muted);font-size:20px;flex-shrink:0;}
+.btn-primary{width:100%;padding:15px;border:none;border-radius:13px;background:var(--accent);color:white;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .18s;min-height:52px;}
+.btn-primary:active{opacity:.85;transform:scale(.98);}
+.btn-primary svg{stroke:white;width:18px;height:18px;}
+.btn-secondary{width:100%;padding:12px;border:1.5px solid var(--border);border-radius:12px;background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;min-height:44px;transition:all .15s;}
+.btn-secondary:active{border-color:var(--accent);color:var(--accent);}
+.empty-state{text-align:center;padding:32px 20px;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.empty-icon{width:56px;height:56px;background:var(--border);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
+.empty-icon svg{stroke:var(--muted);width:24px;height:24px;}
+.empty-t{font-size:14px;font-weight:700;color:var(--muted);}
+.empty-s{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.5;}
+
+/* CANTIERE SCREEN */
+#screen-cantiere{background:var(--paper);}
+.ch-band{background:var(--green);padding:12px 16px 16px;flex-shrink:0;}
+.ch-name{color:var(--white);font-family:'DM Serif Display',serif;font-size:20px;line-height:1.15;}
+.ch-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--green3);margin-top:3px;}
+.ch-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px max(20px,env(safe-area-inset-bottom,20px));display:flex;flex-direction:column;gap:10px;}
+.report-item{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 1px 4px var(--shadow);transition:transform .15s;}
+.report-item:active{transform:scale(.98);}
+.ri-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.ri-dot.open{background:#f59e0b;}
+.ri-dot.signed{background:var(--accent);}
+.ri-info{flex:1;min-width:0;}
+.ri-date{font-size:13px;font-weight:700;}
+.ri-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ri-badge{padding:3px 8px;border-radius:8px;font-family:'DM Mono',monospace;font-size:8px;text-transform:uppercase;flex-shrink:0;}
+.b-open{background:#fef3c7;color:#92400e;border:1px solid #fcd34d;}
+.b-signed{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;}
+.fab{position:fixed;bottom:max(20px,env(safe-area-inset-bottom,20px));left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:448px;padding:16px;border:none;border-radius:14px;background:var(--accent);color:white;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px rgba(42,110,74,.4);z-index:20;transition:all .18s;min-height:54px;}
+.fab:active{opacity:.85;transform:translateX(-50%) scale(.98);}
+.fab svg{stroke:white;width:18px;height:18px;}
+.fab:disabled{opacity:.4;cursor:not-allowed;}
+
+/* REPORT FORM */
+#screen-report{background:var(--paper);}
+.form-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 8px;display:flex;flex-direction:column;gap:14px;}
+.form-actions{flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding:10px 16px max(16px,env(safe-area-inset-bottom,16px));background:var(--paper);border-top:1px solid var(--border);}
+.field-group{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:14px 14px 10px;display:flex;flex-direction:column;gap:10px;}
+.field-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
+.field-input{width:100%;border:none;background:transparent;font-family:'Syne',sans-serif;font-size:15px;color:var(--ink);outline:none;resize:none;line-height:1.5;}
+.field-input::placeholder{color:var(--border);}
+.field-input.big{min-height:70px;}
+.field-divider{height:1px;background:var(--border);margin:2px 0;}
+.ore-row{display:flex;align-items:center;gap:10px;}
+.ore-input{flex:1;border:none;background:transparent;font-family:'Syne',sans-serif;font-size:28px;font-weight:700;color:var(--accent);outline:none;width:100%;}
+.ore-input::placeholder{color:var(--border);font-size:24px;}
+.ore-hint{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
+
+/* MATERIALI */
+.mat-list{display:flex;flex-direction:column;gap:6px;}
+.mat-item{display:flex;align-items:center;gap:8px;}
+.mat-item input{flex:1;border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-family:'Syne',sans-serif;font-size:13px;color:var(--ink);background:var(--paper);outline:none;}
+.mat-item input:focus{border-color:var(--accent);}
+.mat-del{background:none;border:none;color:var(--muted);cursor:pointer;padding:6px;min-width:32px;min-height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.mat-del:active{color:var(--warn);}
+.mat-add{width:100%;padding:9px;border:1.5px dashed var(--border);border-radius:9px;background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.05em;cursor:pointer;transition:all .15s;}
+.mat-add:active{border-color:var(--accent);color:var(--accent);}
+
+/* FOTO */
+.photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.photo-thumb{position:relative;border-radius:10px;overflow:hidden;background:var(--border);}
+.photo-thumb img{width:100%;aspect-ratio:1;object-fit:cover;display:block;}
+.photo-time{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);background:var(--paper);padding:3px 7px;text-align:center;letter-spacing:.04em;border-top:1px solid var(--border);}
+.photo-del{position:absolute;top:5px;right:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;}
+.photo-add{aspect-ratio:1;border:2px dashed var(--border);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.05em;}
+.photo-add svg{stroke:var(--muted);width:22px;height:22px;}
+.photo-add:active{border-color:var(--accent);}
+.photo-add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+/* GPS field */
+.gps-field{display:flex;align-items:center;gap:9px;background:var(--white);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;transition:border-color .2s;}
+.gps-field.ok{border-color:#2a6e4a;background:#f0faf5;}
+.gps-field.err{border-color:var(--accent);background:#fff5f3;}
+.gps-field-ico{width:32px;height:32px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;}
+.gps-field.ok .gps-field-ico{background:#d1fae5;}
+.gps-field.err .gps-field-ico{background:#fee2e2;}
+.gps-field-body{flex:1;min-width:0;}
+.gps-field-coords{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gps-field-status{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:1px;}
+.gps-field.ok .gps-field-status{color:#2a6e4a;}
+.gps-field.err .gps-field-status{color:var(--accent);}
+.gps-field-btn{flex-shrink:0;padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;background:transparent;color:var(--accent);font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.04em;cursor:pointer;white-space:nowrap;min-height:36px;transition:all .15s;}
+.gps-field-btn:active{background:var(--accent);color:white;border-color:var(--accent);}
+/* GPS avviso overlay */
+#gps-avviso-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;display:none;align-items:center;justify-content:center;padding:20px;}
+#gps-avviso-overlay.open{display:flex;}
+.gps-avviso-box{background:var(--white);border-radius:18px;padding:26px 22px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center;}
+.gps-avviso-ico{font-size:44px;line-height:1;}
+.gps-avviso-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink);}
+.gps-avviso-body{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.75;}
+.gps-avviso-warn{background:#fff5f3;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 12px;font-family:'DM Mono',monospace;font-size:10px;color:#b91c1c;line-height:1.65;}
+
+/* FIRMA BOTTOM SHEET */
+.firma-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s;}
+.firma-overlay.open{opacity:1;pointer-events:all;}
+#clockwarn-overlay.open{display:flex;}
+#gpstz-overlay.open{display:flex;}
+.firma-sheet{background:var(--white);border-radius:20px 20px 0 0;padding:20px 20px max(20px,env(safe-area-inset-bottom,20px));width:100%;max-width:480px;margin:0 auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,0,.15,1);}
+.firma-overlay.open .firma-sheet{transform:translateY(0);}
+.firma-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+.firma-title{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:6px;}
+.firma-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:18px;line-height:1.5;}
+.firma-name-wrap{border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;}
+.firma-name-wrap label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px;}
+.firma-name-wrap input{width:100%;border:none;background:transparent;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--ink);outline:none;}
+.firma-btn{width:100%;padding:16px;border:none;border-radius:13px;background:var(--accent);color:white;font-family:'Syne',sans-serif;font-weight:700;font-size:16px;cursor:pointer;transition:all .18s;min-height:52px;}
+.firma-btn:active{opacity:.85;}
+.firma-cancel{width:100%;padding:12px;border:none;background:transparent;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;margin-top:4px;}
+
+/* Condividi bottom sheet */
+.share-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s;}
+.share-overlay.open{opacity:1;pointer-events:all;}
+.share-sheet{background:var(--white);border-radius:20px 20px 0 0;padding:20px 20px max(24px,env(safe-area-inset-bottom,24px));width:100%;max-width:480px;margin:0 auto;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,0,.15,1);display:flex;flex-direction:column;gap:10px;}
+.share-overlay.open .share-sheet{transform:translateY(0);}
+.share-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);text-align:center;margin-bottom:2px;}
+.share-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-align:center;letter-spacing:.06em;margin-bottom:4px;}
+.share-btn{width:100%;padding:15px;border:none;border-radius:13px;color:white;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;transition:all .18s;}
+.share-btn:active{opacity:.85;transform:scale(.98);}
+.share-btn-wa{background:#25D366;}
+.share-btn-mail{background:var(--steel, #3d4f6e);}
+
+/* Update overlay */
+#op-update-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
+#op-update-overlay.open{display:flex;}
+.op-update-box{background:var(--white);border-radius:18px;padding:24px 20px;max-width:360px;width:100%;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+.op-update-badge{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:white;border-radius:20px;padding:4px 12px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;}
+.op-update-title{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:6px;}
+.op-update-ver{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:14px;}
+.op-update-items{display:flex;flex-direction:column;gap:7px;margin-bottom:18px;}
+.op-update-item{display:flex;align-items:flex-start;gap:9px;font-size:13px;line-height:1.4;}
+.op-update-item::before{content:'✓';color:var(--accent);font-weight:700;flex-shrink:0;margin-top:1px;}
+.op-update-ok{width:100%;padding:13px;border:none;border-radius:10px;background:var(--ink);color:white;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;}
+.op-update-ok:active{opacity:.8;}
+
+/* REPORT VIEW (sola lettura) */
+#screen-view{background:var(--paper);}
+.view-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px max(100px,env(safe-area-inset-bottom,100px));display:flex;flex-direction:column;gap:10px;}
+.view-card{background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:14px;}
+.view-card-title{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;}
+.view-field{display:flex;flex-direction:column;gap:2px;padding:6px 0;border-bottom:1px solid var(--paper);}
+.view-field:last-child{border-bottom:none;}
+.vf-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;}
+.vf-value{font-size:13px;color:var(--ink);line-height:1.5;}
+.vf-value.big{font-size:26px;font-weight:700;color:var(--accent);font-family:'DM Serif Display',serif;}
+.firma-badge{display:flex;align-items:center;gap:8px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:10px;padding:10px 12px;}
+.firma-badge svg{stroke:#065f46;width:16px;height:16px;flex-shrink:0;}
+.firma-badge-text{font-family:'DM Mono',monospace;font-size:10px;color:#065f46;line-height:1.4;}
+.view-photos{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.view-photo{border-radius:8px;overflow:hidden;aspect-ratio:1;}
+.view-photo img{width:100%;height:100%;object-fit:cover;}
+.mat-chip{display:inline-flex;align-items:center;background:var(--paper);border:1px solid var(--border);border-radius:7px;padding:4px 9px;font-family:'DM Mono',monospace;font-size:10px;color:var(--ink);margin:2px;}
+
+/* SETUP SCREEN */
+#screen-setup{background:var(--green);}
+.setup-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--paper);border-radius:20px 20px 0 0;padding:24px 20px max(20px,env(safe-area-inset-bottom,20px));display:flex;flex-direction:column;gap:16px;}
+.setup-hero{padding:28px 20px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.setup-icon{width:68px;height:68px;background:var(--green2);border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;}
+.setup-icon svg{stroke:white;width:30px;height:30px;}
+.setup-title{font-family:'DM Serif Display',serif;font-size:24px;color:var(--white);}
+.setup-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--green3);letter-spacing:.1em;}
+.setup-field{display:flex;flex-direction:column;gap:6px;}
+.setup-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+.setup-input{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;font-family:'Syne',sans-serif;font-size:16px;color:var(--ink);background:var(--white);outline:none;transition:border-color .15s;}
+.setup-input:focus{border-color:var(--accent);}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.role-btn{padding:13px 10px;border:1.5px solid var(--border);border-radius:12px;background:var(--white);color:var(--muted);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center;}
+.role-btn.sel{border-color:var(--accent);background:#f0faf5;color:var(--accent);}
+.role-btn:active{transform:scale(.97);}
+
+/* TOAST */
+#toast{position:fixed;bottom:max(80px,env(safe-area-inset-bottom,80px));left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--white);padding:10px 18px;border-radius:24px;font-family:'DM Mono',monospace;font-size:11px;white-space:nowrap;opacity:0;transition:all .25s;z-index:100;pointer-events:none;max-width:calc(100vw - 40px);text-align:center;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* SETUP CANTIERE da link */
+.link-banner{background:var(--green2);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.link-banner svg{stroke:white;width:18px;height:18px;flex-shrink:0;}
+.link-banner-text{font-family:'DM Mono',monospace;font-size:10px;color:white;line-height:1.5;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HOME -->
+<div id="screen-home" class="screen slide-right">
+  <header>
+    <div class="hlogo">
+      <div class="hlogo-t">Report Cantiere</div>
+      <div class="hlogo-s">Operaio</div>
+    </div>
+    <button class="back-btn" onclick="openSetup()" title="Impostazioni" style="font-size:9px;gap:4px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Profilo
+    </button>
+  </header>
+  <div id="home-top" class="home-top">
+    <div class="home-greeting">Bentornato</div>
+    <div class="home-name" id="home-name">—</div>
+    <div class="home-role" id="home-role">—</div>
+  </div>
+  <div class="home-body">
+    <div class="section-label">I miei cantieri</div>
+    <div id="cantieri-list"></div>
+  </div>
+</div>
+
+<!-- CANTIERE -->
+<div id="screen-cantiere" class="screen slide-right">
+  <header>
+    <button class="back-btn" onclick="goBack('screen-home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+      Cantieri
+    </button>
+    <button class="back-btn" onclick="deleteCantiere()" style="color:rgba(255,100,80,.8);" title="Elimina cantiere">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="18" height="18"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      Elimina
+    </button>
+  </header>
+  <div class="ch-band">
+    <div class="ch-name" id="ch-name">—</div>
+    <div class="ch-meta" id="ch-meta">—</div>
+  </div>
+  <div class="ch-body" id="ch-reports"></div>
+  <button class="fab" id="fab-new" onclick="newReport()">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Nuovo report
+  </button>
+</div>
+
+<!-- FORM REPORT -->
+<div id="screen-report" class="screen slide-right">
+  <header>
+    <button class="back-btn" onclick="goBack('screen-cantiere')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+      Annulla
+    </button>
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.5);" id="form-date-label">—</div>
+  </header>
+  <div class="form-body" id="form-body">
+
+    <!-- ORE -->
+    <div class="field-group">
+      <div class="field-label">Ore lavorate oggi</div>
+      <div class="ore-row">
+        <input class="ore-input" type="text" inputmode="decimal" id="f-ore" placeholder="8" maxlength="5">
+        <div class="ore-hint">ore</div>
+      </div>
+    </div>
+
+    <!-- LAVORI -->
+    <div class="field-group">
+      <div class="field-label">Lavori eseguiti</div>
+      <textarea class="field-input big" id="f-lavori" placeholder="Descrivi cosa hai fatto oggi..."></textarea>
+    </div>
+
+    <!-- NOTE LIBERE -->
+    <div class="field-group">
+      <div class="field-label">Note libere</div>
+      <textarea class="field-input big" id="f-note" placeholder="Qualsiasi altra annotazione..."></textarea>
+    </div>
+
+    <!-- MATERIALI -->
+    <div class="field-group">
+      <div class="field-label">Materiali usati</div>
+      <div class="mat-list" id="mat-list"></div>
+      <button class="mat-add" onclick="addMateriale()">+ Aggiungi materiale</button>
+    </div>
+
+    <!-- GPS POSIZIONE -->
+    <div class="field-group">
+      <div class="field-label">Posizione GPS <span style="color:var(--accent);font-size:9px;">* obbligatorio</span></div>
+      <div class="gps-field" id="gps-field">
+        <div class="gps-field-ico" id="gps-field-ico">📍</div>
+        <div class="gps-field-body">
+          <div class="gps-field-coords" id="gps-field-coords">Non rilevata</div>
+          <div class="gps-field-status" id="gps-field-status">Premi il pulsante per rilevare</div>
+        </div>
+        <button class="gps-field-btn" id="gps-field-btn" onclick="rilievaGPSReport()">📍 Rileva</button>
+      </div>
+    </div>
+
+    <!-- FOTO -->
+    <div class="field-group">
+      <div class="field-label">Foto <span style="color:var(--accent);font-size:9px;">* obbligatorio</span> <span id="foto-count" style="color:var(--accent)"></span></div>
+      <div class="photo-grid" id="photo-grid">
+      </div>
+      <div class="photo-add-row">
+        <button class="photo-add" onclick="document.getElementById('photo-input').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Galleria
+        </button>
+        <button class="photo-add" onclick="document.getElementById('camera-input').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Scatta
+        </button>
+      </div>
+      <input type="file" id="photo-input" accept="image/*" multiple style="display:none" onchange="handlePhotos(this)">
+      <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhotos(this)">
+    </div>
+
+  </div>
+  <!-- BOTTONI AZIONI FISSI IN BASSO -->
+  <div class="form-actions">
+    <button class="btn-primary" onclick="saveReport()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Salva bozza
+    </button>
+    <button class="btn-primary" onclick="openFirma()" style="background:var(--green2);">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>
+      Firma e invia
+    </button>
+  </div>
+</div>
+
+<!-- VIEW REPORT -->
+<div id="screen-view" class="screen slide-right">
+  <header>
+    <button class="back-btn" onclick="goBack('screen-cantiere')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+      Indietro
+    </button>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,.5);" id="view-date-label">—</div>
+  </header>
+  <div class="view-body" id="view-body"></div>
+  <div style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;padding:12px 16px max(16px,env(safe-area-inset-bottom,16px));background:var(--paper);border-top:1px solid var(--border);display:flex;gap:8px;z-index:20;" id="view-actions"></div>
+</div>
+
+<!-- SETUP PROFILO -->
+<div id="screen-setup" class="screen slide-right">
+  <header style="background:transparent;">
+    <button class="back-btn" onclick="goBack('screen-home')" style="color:rgba(255,255,255,.6);">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+      Indietro
+    </button>
+  </header>
+  <div class="setup-hero">
+    <div class="setup-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <div class="setup-title">Il tuo profilo</div>
+    <div class="setup-sub">usato in tutti i report</div>
+  </div>
+  <div class="setup-body">
+    <div class="setup-field">
+      <div class="setup-label">Nome e cognome</div>
+      <input class="setup-input" type="text" id="setup-nome" placeholder="Mario Rossi">
+    </div>
+    <div class="setup-field">
+      <div class="setup-label">Ruolo</div>
+      <div class="role-grid" id="role-grid">
+        <button class="role-btn" onclick="selRole(this,'Muratore')">🧱 Muratore</button>
+        <button class="role-btn" onclick="selRole(this,'Elettricista')">⚡ Elettricista</button>
+        <button class="role-btn" onclick="selRole(this,'Idraulico')">🔧 Idraulico</button>
+        <button class="role-btn" onclick="selRole(this,'Carpentiere')">🪵 Carpentiere</button>
+        <button class="role-btn" onclick="selRole(this,'Gruista')">🏗️ Gruista</button>
+        <button class="role-btn" onclick="selRole(this,'Generico')">👷 Generico</button>
+      </div>
+      <input class="setup-input" type="text" id="setup-role-custom" placeholder="Oppure scrivi il tuo ruolo..." style="margin-top:6px;">
+    </div>
+    <div class="setup-field">
+      <div class="setup-label">Fuso orario</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div id="setup-tz-info" style="flex:1;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.5;padding:10px 12px;background:var(--white);border:1.5px solid var(--border);border-radius:10px;min-height:40px;display:flex;align-items:center;"></div>
+        <button onclick="detectTzFromGPS()" style="padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;background:var(--white);color:var(--accent);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.04em;cursor:pointer;white-space:nowrap;min-height:44px;transition:all .15s;" onmousedown="this.style.borderColor='var(--accent)'">📍 GPS</button>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveProfile()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>
+      Salva profilo
+    </button>
+  </div>
+</div>
+
+<!-- FIRMA OVERLAY -->
+<div class="firma-overlay" id="firma-overlay" onclick="closeFirmaIfBg(event)">
+  <div class="firma-sheet">
+    <div class="firma-handle"></div>
+    <div class="firma-title">Firma report</div>
+    <div class="firma-sub">Il report verrà bloccato e potrai condividerlo via WhatsApp con il capocantiere.</div>
+    <div class="firma-name-wrap">
+      <label>Firmato da</label>
+      <input type="text" id="firma-nome" placeholder="Il tuo nome">
+    </div>
+    <button class="firma-btn" onclick="doFirma()">✓ Firma e condividi</button>
+    <button class="firma-cancel" onclick="closeFirma()">Annulla</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- CLOCK WARNING OVERLAY -->
+<div id="clockwarn-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;padding:28px;gap:14px;text-align:center;">
+  <div id="cw-icon" style="font-size:40px;">🕐</div>
+  <div id="cw-title" style="font-family:'DM Serif Display',serif;font-size:22px;color:white;">Data non corretta</div>
+  <div id="cw-body" style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,.7);line-height:1.7;max-width:340px;"></div>
+  <div id="cw-detail" style="background:rgba(255,255,255,.08);border-radius:10px;padding:12px 16px;font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,.9);line-height:1.6;max-width:340px;width:100%;"></div>
+  <div id="cw-hint" style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.5);max-width:300px;"></div>
+  <button onclick="retryClockCheck()" style="padding:14px 28px;border:none;border-radius:12px;background:var(--accent);color:white;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;">Ricontrolla ora</button>
+</div>
+
+<!-- UPDATE OVERLAY -->
+<div id="op-update-overlay">
+  <div class="op-update-box">
+    <div class="op-update-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+      Aggiornamento
+    </div>
+    <div class="op-update-title" id="op-update-title">Novità</div>
+    <div class="op-update-ver" id="op-update-ver">Versione —</div>
+    <div class="op-update-items" id="op-update-items"></div>
+    <button class="op-update-ok" onclick="opDismissUpdate()">Ho capito, continua →</button>
+  </div>
+</div>
+
+<!-- CONDIVIDI REPORT SHEET -->
+<div class="share-overlay" id="share-overlay" onclick="closeShareSheet(event)">
+  <div class="share-sheet">
+    <div class="firma-handle"></div>
+    <div class="share-title">Invia report</div>
+    <div class="share-sub" id="share-sheet-sub">Scegli come inviare il report al capocantiere</div>
+    <button class="share-btn share-btn-wa" onclick="doShareViaWhatsApp()">
+      <svg viewBox="0 0 24 24" fill="white" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.558 4.121 1.534 5.857L.057 23.571a.5.5 0 00.614.614l5.714-1.477A11.952 11.952 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.896 0-3.67-.527-5.184-1.443l-.37-.22-3.835.99.999-3.835-.243-.386A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      Invia via WhatsApp
+    </button>
+    <button class="share-btn share-btn-mail" onclick="doShareViaMail()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="20" height="20"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      Invia via Email
+    </button>
+    <button class="firma-cancel" onclick="document.getElementById('share-overlay').classList.remove('open')">Annulla</button>
+  </div>
+</div>
+
+<!-- REPORT AZIONI BOTTOM SHEET (report firmato) -->
+<div class="share-overlay" id="report-actions-overlay" onclick="closeReportActionsSheet(event)">
+  <div class="share-sheet" id="report-actions-sheet">
+    <div class="firma-handle"></div>
+    <div class="share-title" id="ra-title">Report</div>
+    <div class="share-sub" id="ra-sub">—</div>
+    <button class="btn-primary" onclick="raVisualizza()" style="margin-top:4px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" width="18" height="18"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      Visualizza
+    </button>
+    <button class="share-btn" onclick="raInvia()" style="background:var(--accent);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="18" height="18"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      Invia file .txt
+    </button>
+    <button class="share-btn" onclick="raElimina()" style="background:var(--warn);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" width="18" height="18"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      Elimina report
+    </button>
+    <button class="firma-cancel" onclick="document.getElementById('report-actions-overlay').classList.remove('open')">Annulla</button>
+  </div>
+</div>
+
+<!-- GPS TIMEZONE POPUP -->
+<div id="gpstz-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:400;display:none;align-items:center;justify-content:center;padding:20px;" class="">
+  <div style="background:var(--white);border-radius:18px;padding:24px 20px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center;">
+    <div style="font-size:38px;">🌍</div>
+    <div style="font-family:'DM Serif Display',serif;font-size:20px;">Fuso orario</div>
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.7;">Per garantire la correttezza dei report,<br>consenti l'accesso alla posizione GPS.<br>Viene usato solo per rilevare il fuso orario.</div>
+    <div id="gpstz-detected" style="background:var(--paper);border-radius:8px;padding:9px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink);border:1.5px solid var(--border);"></div>
+    <button class="btn-primary" onclick="gpstzAllow()">📍 Consenti accesso GPS</button>
+    <button class="btn-secondary" onclick="gpstzSkip()">Usa fuso orario del dispositivo</button>
+  </div>
+</div>
+
+<!-- GPS AVVISO OVERLAY -->
+<div id="gps-avviso-overlay">
+  <div class="gps-avviso-box">
+    <div class="gps-avviso-ico">📍</div>
+    <div class="gps-avviso-title">GPS non attivo</div>
+    <div class="gps-avviso-body">
+      Per registrare la presenza in cantiere<br>è necessario il rilevamento GPS.<br><br>
+      Attiva momentaneamente la posizione<br>nelle impostazioni del dispositivo,<br>poi riprova.
+    </div>
+    <div class="gps-avviso-warn">
+      ⚠️ Puoi compilare il report normalmente,<br>ma <strong>non potrai firmarlo e inviarlo</strong><br>senza il rilevamento GPS.
+    </div>
+    <button class="btn-primary" onclick="gpsAvvisoRiprova()">📍 Riprova rilevamento</button>
+    <button class="btn-secondary" onclick="gpsAvvisoChiudi()">Continua senza GPS (solo bozza)</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════
+//  SERVICE WORKER
+// ═══════════════════════════════════
+const APP_VERSION = '1.2.0';
+// SW in waiting da attivare solo dopo che l'utente chiude il popup
+let _opPendingSwReg = null;
+
+if ('serviceWorker' in navigator) {
+  // Ricarica solo quando il controller cambia (dopo SKIP_WAITING da dismissUpdate)
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) { refreshing = true; window.location.reload(); }
+  });
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js?v=' + APP_VERSION)
+      .then(reg => {
+        setInterval(() => reg.update(), 60000);
+
+        function handleWaitingSW(sw) {
+          if (!sw || sw.state !== 'installed') return;
+          _opPendingSwReg = sw;
+          const ch = new MessageChannel();
+          ch.port1.onmessage = e => {
+            if (e.data && e.data.type === 'VERSION_INFO') {
+              opHandleNewVersion(e.data.version, e.data.changelog);
+            }
+          };
+          sw.postMessage({ type: 'GET_VERSION' }, [ch.port2]);
+        }
+
+        if (reg.waiting) handleWaitingSW(reg.waiting);
+
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          if (newSW) newSW.addEventListener('statechange', () => {
+            if (newSW.state === 'installed' && reg.active) {
+              handleWaitingSW(newSW);
+            }
+          });
+        });
+      });
+
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data && e.data.type === 'NEW_VERSION') {
+        opHandleNewVersion(e.data.version, e.data.changelog);
+      }
+    });
+  });
+}
+
+// ═══════════════════════════════════
+//  STATE
+// ═══════════════════════════════════
+let profile = {};
+let cantieri = {};
+let activeCantiere = null;
+let editingReportId = null;
+let formPhotos = [];
+let selectedRole = '';
+
+// ═══════════════════════════════════
+//  STORAGE
+// ═══════════════════════════════════
+function saveAll() {
+  try {
+    localStorage.setItem('op_profile', JSON.stringify(profile));
+    const light = {};
+    for (const id in cantieri) {
+      light[id] = {...cantieri[id]};
+      (light[id].reports || []).forEach(r => { delete r._photos; });
+    }
+    localStorage.setItem('op_cantieri', JSON.stringify(light));
+  } catch(e) { showToast('⚠️ Spazio insufficiente'); }
+}
+
+function loadAll() {
+  try {
+    profile = JSON.parse(localStorage.getItem('op_profile') || '{}');
+    cantieri = JSON.parse(localStorage.getItem('op_cantieri') || '{}');
+  } catch(e) { profile = {}; cantieri = {}; }
+}
+
+function savePhotosIDB(reportId, photos) {
+  return new Promise(res => {
+    const req = indexedDB.open('operaio-photos', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('photos', {keyPath:'reportId'});
+    req.onsuccess = e => {
+      const db = e.target.result;
+      const tx = db.transaction('photos','readwrite');
+      tx.objectStore('photos').put({reportId, photos});
+      tx.oncomplete = res;
+    };
+    req.onerror = res;
+  });
+}
+
+function loadPhotosIDB(reportId) {
+  return new Promise(res => {
+    const req = indexedDB.open('operaio-photos', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('photos', {keyPath:'reportId'});
+    req.onsuccess = e => {
+      const db = e.target.result;
+      const tx = db.transaction('photos','readonly');
+      const gr = tx.objectStore('photos').get(reportId);
+      gr.onsuccess = () => res(gr.result ? gr.result.photos : []);
+      gr.onerror = () => res([]);
+    };
+    req.onerror = () => res([]);
+  });
+}
+
+function deletePhotosIDB(reportId) {
+  return new Promise(res => {
+    const req = indexedDB.open('operaio-photos', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('photos', {keyPath:'reportId'});
+    req.onsuccess = e => {
+      const db = e.target.result;
+      const tx = db.transaction('photos','readwrite');
+      tx.objectStore('photos').delete(reportId);
+      tx.oncomplete = res;
+    };
+    req.onerror = res;
+  });
+}
+
+function saveFileIDB(reportId, jsonString) {
+  return new Promise(res => {
+    const req = indexedDB.open('operaio-files', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('files', {keyPath:'reportId'});
+    req.onsuccess = e => {
+      const db = e.target.result;
+      const tx = db.transaction('files','readwrite');
+      tx.objectStore('files').put({reportId, data: jsonString, ts: Date.now()});
+      tx.oncomplete = res;
+    };
+    req.onerror = res;
+  });
+}
+
+function loadFileIDB(reportId) {
+  return new Promise(res => {
+    const req = indexedDB.open('operaio-files', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('files', {keyPath:'reportId'});
+    req.onsuccess = e => {
+      const db = e.target.result;
+      const tx = db.transaction('files','readonly');
+      const gr = tx.objectStore('files').get(reportId);
+      gr.onsuccess = () => res(gr.result ? gr.result.data : null);
+      gr.onerror = () => res(null);
+    };
+    req.onerror = () => res(null);
+  });
+}
+
+function deleteFileIDB(reportId) {
+  return new Promise(res => {
+    const req = indexedDB.open('operaio-files', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('files', {keyPath:'reportId'});
+    req.onsuccess = e => {
+      const db = e.target.result;
+      const tx = db.transaction('files','readwrite');
+      tx.objectStore('files').delete(reportId);
+      tx.oncomplete = res;
+    };
+    req.onerror = res;
+  });
+}
+
+async function purgeOldReports() {
+  const DAYS = 7;
+  const cutoff = Date.now() - DAYS * 24 * 60 * 60 * 1000;
+  let deleted = 0;
+  for (const cid in cantieri) {
+    const c = cantieri[cid];
+    if (!c.reports) continue;
+    const toDelete = c.reports.filter(r => {
+      const signed = r.status === 'firmato' || r.status === 'firmato-auto';
+      const ts = r.firmatoAt || r.firmato_ts || 0;
+      return signed && ts && ts < cutoff;
+    });
+    for (const r of toDelete) {
+      await deletePhotosIDB(r.id);
+      await deleteFileIDB(r.id);
+      deleted++;
+    }
+    c.reports = c.reports.filter(r => {
+      const signed = r.status === 'firmato' || r.status === 'firmato-auto';
+      const ts = r.firmatoAt || r.firmato_ts || 0;
+      return !(signed && ts && ts < cutoff);
+    });
+  }
+  if (deleted > 0) {
+    saveAll();
+    renderHome();
+    if (activeCantiere) renderReportList();
+  }
+}
+
+// ═══════════════════════════════════
+//  STORAGE PERSISTENCE
+// ═══════════════════════════════════
+async function requestStoragePersistence() {
+  if (!navigator.storage || !navigator.storage.persist) return;
+  try {
+    const already = await navigator.storage.persisted();
+    if (already) return;
+    const granted = await navigator.storage.persist();
+    if (!granted) {
+      setTimeout(() => {
+        showToast('⚠️ Aggiungi l\'app alla schermata home per proteggere i dati');
+      }, 3000);
+    }
+  } catch(e) {}
+}
+
+window.addEventListener('load', () => {
+  try {
+    loadAll();
+    requestStoragePersistence();
+    checkAutoFirma();
+    handleURLParams();
+    if (navigator.onLine) silentLKGTAnchor();
+    window.addEventListener('online', () => silentLKGTAnchor());
+    renderHome();
+    if (!profile.nome) {
+      showScreen('screen-setup', false);
+    } else {
+      showScreen('screen-home', false);
+      checkFirstLaunchTimezone();
+    }
+    setTimeout(() => opHandleNewVersion(APP_VERSION), 1200);
+    setTimeout(() => purgeOldReports().catch(e => console.warn('purge error', e)), 2000);
+  } catch(e) {
+    console.error('Init error:', e);
+    try {
+      if (!profile.nome) showScreen('screen-setup', false);
+      else showScreen('screen-home', false);
+    } catch(e2) {}
+  }
+});
+
+window.addEventListener('popstate', () => {
+  const prev = history.state && history.state.screen;
+  if (prev) showScreen(prev, false);
+});
+
+function handleURLParams() {
+  const p = new URLSearchParams(location.search);
+  const cantId   = p.get('cantiere');
+  const cantNome = p.get('nome_cantiere') ? decodeURIComponent(p.get('nome_cantiere')) : null;
+  const cantComm = p.get('committente') ? decodeURIComponent(p.get('committente')) : null;
+  const cantData = p.get('data_inizio') || null;
+  const opNome   = p.get('nome') ? decodeURIComponent(p.get('nome')) : null;
+  const opRuolo  = p.get('ruolo') ? decodeURIComponent(p.get('ruolo')) : null;
+
+  if (cantId && cantNome) {
+    if (!cantieri[cantId]) {
+      cantieri[cantId] = {
+        id: cantId,
+        nome: cantNome,
+        committente: cantComm || '',
+        dataInizio: cantData || '',
+        reports: []
+      };
+      saveAll();
+      showToast('✓ Cantiere "' + cantNome + '" aggiunto');
+    }
+    if (opNome && !profile.nome) {
+      profile.nome = opNome;
+      if (opRuolo) profile.ruolo = opRuolo;
+      saveAll();
+    }
+    history.replaceState({}, '', location.pathname);
+  }
+}
+
+// ═══════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════
+function showScreen(id, push = true) {
+  const all = document.querySelectorAll('.screen');
+  all.forEach(s => {
+    s.classList.remove('show', 'slide-left', 'slide-right');
+    s.classList.add('slide-right');
+  });
+  const el = document.getElementById(id);
+  if (el) { el.classList.remove('slide-right','slide-left'); el.classList.add('show'); }
+  if (push) history.pushState({screen: id}, '', '');
+}
+
+function goBack(to) {
+  showScreen(to, true);
+}
+
+// ═══════════════════════════════════
+//  HOME
+// ═══════════════════════════════════
+function renderHome() {
+  document.getElementById('home-name').textContent = profile.nome || '—';
+  document.getElementById('home-role').textContent = profile.ruolo || 'Nessun ruolo';
+
+  const list = document.getElementById('cantieri-list');
+  const ids = Object.keys(cantieri);
+  if (!ids.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      <div class="empty-t">Nessun cantiere</div>
+      <div class="empty-s">Chiedi al capocantiere di inviarti il link di invito via WhatsApp</div>
+    </div>`;
+    return;
+  }
+  list.innerHTML = ids.map(id => {
+    const c = cantieri[id];
+    const tot = (c.reports||[]).length;
+    const oggi = new Date().toLocaleDateString('sv-SE', {timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone});
+    const todayR = (c.reports||[]).find(r => r.data === oggi);
+    const meta = todayR
+      ? (todayR.status === 'firmato' ? '✓ Report di oggi firmato' : '⚠️ Report di oggi in bozza')
+      : (tot ? tot + ' report — nessuno oggi' : 'Nessun report');
+    return `<div class="cant-card" onclick="openCantiere('${id}')">
+      <div class="cant-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      <div class="cant-body">
+        <div class="cant-name">${esc(c.nome)}</div>
+        <div class="cant-meta">${esc(meta)}</div>
+      </div>
+      <div class="cant-arrow">›</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════
+//  CANTIERE
+// ═══════════════════════════════════
+function openCantiere(id) {
+  activeCantiere = id;
+  const c = cantieri[id];
+  document.getElementById('ch-name').textContent = c.nome;
+  document.getElementById('ch-meta').textContent = [c.committente, c.dataInizio ? 'Dal '+new Date(c.dataInizio).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'}) : ''].filter(Boolean).join(' · ') || 'Cantiere';
+  renderReportList();
+  updateFAB();
+  showScreen('screen-cantiere');
+}
+
+async function deleteCantiere() {
+  if (!activeCantiere) return;
+  const c = cantieri[activeCantiere];
+  const nReport = (c.reports || []).length;
+  const msg = nReport > 0
+    ? `Eliminare il cantiere "${c.nome}" e tutti i suoi ${nReport} report? L'operazione non è reversibile.`
+    : `Eliminare il cantiere "${c.nome}"? L'operazione non è reversibile.`;
+  if (!confirm(msg)) return;
+  // Elimina foto e file IDB di tutti i report
+  for (const r of (c.reports || [])) {
+    await deletePhotosIDB(r.id);
+    await deleteFileIDB(r.id);
+  }
+  delete cantieri[activeCantiere];
+  activeCantiere = null;
+  saveAll();
+  renderHome();
+  showToast('🗑 Cantiere eliminato');
+  goBack('screen-home');
+}
+
+function renderReportList() {
+  const c = cantieri[activeCantiere];
+  const reports = [...(c.reports||[])].sort((a,b) => b.data.localeCompare(a.data));
+  const el = document.getElementById('ch-reports');
+  if (!reports.length) {
+    el.innerHTML = `<div class="empty-state" style="padding-top:40px;">
+      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div class="empty-t">Nessun report</div>
+      <div class="empty-s">Tocca il bottone verde in basso per creare il primo report</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = reports.map(r => {
+    const dateStr = new Date(r.data).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+    const sub = [r.ore ? r.ore+' ore' : '', r.lavori ? r.lavori.slice(0,40)+(r.lavori.length>40?'…':'') : ''].filter(Boolean).join(' · ');
+    const signed = r.status === 'firmato' || r.status === 'firmato-auto';
+    const badgeLabel = r.status === 'firmato' ? 'Firmato' : r.status === 'firmato-auto' ? 'Auto' : 'Bozza';
+    return `<div class="report-item" onclick="viewReport('${r.id}')">
+      <div class="ri-dot ${signed?'signed':'open'}"></div>
+      <div class="ri-info">
+        <div class="ri-date">${dateStr}</div>
+        <div class="ri-sub">${esc(sub) || 'Report vuoto'}</div>
+      </div>
+      <div class="ri-badge ${signed?'b-signed':'b-open'}">${badgeLabel}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateFAB() {
+  const c = cantieri[activeCantiere];
+  const oggi = new Date().toLocaleDateString('sv-SE', {timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone});
+  const todayR = (c.reports||[]).find(r => r.data === oggi);
+  const fab = document.getElementById('fab-new');
+  if (todayR && todayR.status !== 'firmato') {
+    fab.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modifica report di oggi`;
+  } else if (todayR && todayR.status === 'firmato') {
+    fab.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> Report firmato`;
+    fab.disabled = true;
+  } else {
+    fab.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nuovo report`;
+    fab.disabled = false;
+  }
+}
+
+// ═══════════════════════════════════
+//  TIMEZONE + GPS
+// ═══════════════════════════════════
+function getDeviceTz() {
+  try {
+    const p = JSON.parse(localStorage.getItem('op_profile') || '{}');
+    return p.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Rome';
+  } catch(e) {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Rome';
+  }
+}
+
+function todayStr() {
+  return new Date().toLocaleDateString('sv-SE', {timeZone: getDeviceTz()});
+}
+
+function saveTz(tz) {
+  try {
+    const p = JSON.parse(localStorage.getItem('op_profile') || '{}');
+    p.timezone = tz;
+    localStorage.setItem('op_profile', JSON.stringify(p));
+    if (profile) profile.timezone = tz;
+  } catch(e) {}
+}
+
+function detectTzFromGPS(onDone) {
+  const sysTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Rome';
+  if (!navigator.geolocation) { _applyTz(sysTz, 'Dal dispositivo', onDone); return; }
+  showToast('📍 Rilevamento posizione…');
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      if (navigator.onLine) {
+        showToast('🌍 Ricerca fuso orario…');
+        fetch(
+          'https://timeapi.io/api/TimeZone/coordinate?latitude=' + pos.coords.latitude + '&longitude=' + pos.coords.longitude,
+          { cache: 'no-store' }
+        )
+        .then(r => r.json())
+        .then(d => { _applyTz(d.timeZone || sysTz, 'Rilevato da GPS', onDone); })
+        .catch(() => { _applyTz(sysTz, 'Dal dispositivo (API non raggiungibile)', onDone); });
+      } else { _applyTz(sysTz, 'Dal dispositivo (offline)', onDone); }
+    },
+    err => {
+      if (err.code === 1) showToast('⚠️ Permesso posizione negato — uso fuso di sistema');
+      _applyTz(sysTz, 'Dal dispositivo', onDone);
+    },
+    { enableHighAccuracy: false, timeout: 20000, maximumAge: 300000 }
+  );
+}
+
+function _applyTz(tz, label, onDone) {
+  saveTz(tz);
+  const tzInfo = document.getElementById('setup-tz-info');
+  if (tzInfo) tzInfo.textContent = '✓ ' + label + ': ' + tz;
+  showToast('✓ Fuso: ' + tz);
+  if (onDone) onDone(tz);
+}
+
+// ── GPS REPORT ──
+let gpsReport = null;
+
+function rilievaGPSReport(silenzioso) {
+  const btn = document.getElementById('gps-field-btn');
+  const field = document.getElementById('gps-field');
+  const coords = document.getElementById('gps-field-coords');
+  const status = document.getElementById('gps-field-status');
+  if (btn) { btn.textContent = '⏳…'; btn.disabled = true; }
+  if (!navigator.geolocation) {
+    if (field) field.classList.add('err');
+    if (coords) coords.textContent = 'GPS non disponibile';
+    if (status) status.textContent = 'Dispositivo non supportato';
+    if (btn) { btn.textContent = '📍 Rileva'; btn.disabled = false; }
+    document.getElementById('gps-avviso-overlay').classList.add('open');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      gpsReport = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: Math.round(pos.coords.accuracy),
+        ts: Date.now()
+      };
+      document.getElementById('gps-avviso-overlay').classList.remove('open');
+      if (field) { field.classList.remove('err'); field.classList.add('ok'); }
+      if (coords) coords.textContent = gpsReport.lat.toFixed(5) + ', ' + gpsReport.lng.toFixed(5);
+      if (status) status.textContent = '✓ Precisione: ±' + gpsReport.accuracy + ' m';
+      if (btn) { btn.textContent = '🔄 Aggiorna'; btn.disabled = false; }
+      if (!silenzioso) showToast('✓ Posizione rilevata');
+    },
+    err => {
+      gpsReport = null;
+      if (field) { field.classList.remove('ok'); field.classList.add('err'); }
+      if (coords) coords.textContent = err.code === 1 ? 'Permesso negato' : 'Errore rilevamento';
+      if (status) status.textContent = err.code === 1 ? 'Attiva il GPS e riprova' : 'Controlla le impostazioni';
+      if (btn) { btn.textContent = '📍 Riprova'; btn.disabled = false; }
+      document.getElementById('gps-avviso-overlay').classList.add('open');
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+  );
+}
+
+function gpsAvvisoRiprova() {
+  document.getElementById('gps-avviso-overlay').classList.remove('open');
+  rilievaGPSReport(false);
+}
+
+function gpsAvvisoChiudi() {
+  document.getElementById('gps-avviso-overlay').classList.remove('open');
+  showToast('⚠️ GPS non rilevato — potrai solo salvare la bozza');
+}
+
+function setGpsFieldFromReport(gps) {
+  const field = document.getElementById('gps-field');
+  const coords = document.getElementById('gps-field-coords');
+  const status = document.getElementById('gps-field-status');
+  const btn = document.getElementById('gps-field-btn');
+  if (!field) return;
+  if (gps && gps.lat) {
+    gpsReport = gps;
+    field.classList.remove('err'); field.classList.add('ok');
+    if (coords) coords.textContent = gps.lat.toFixed(5) + ', ' + gps.lng.toFixed(5);
+    if (status) status.textContent = '✓ Precisione: ±' + (gps.accuracy||'?') + ' m';
+    if (btn) btn.textContent = '🔄 Aggiorna';
+  } else {
+    gpsReport = null;
+    field.classList.remove('ok');
+    if (coords) coords.textContent = 'Non rilevata';
+    if (status) status.textContent = 'Premi il pulsante per rilevare';
+    if (btn) btn.textContent = '📍 Rileva';
+  }
+}
+
+function checkFirstLaunchTimezone() {
+  try {
+    const p = JSON.parse(localStorage.getItem('op_profile') || '{}');
+    if (p.timezone) return;
+  } catch(e) {}
+  const autoTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Rome';
+  document.getElementById('gpstz-detected').textContent = 'Fuso rilevato: ' + autoTz;
+  setTimeout(() => {
+    document.getElementById('gpstz-overlay').classList.add('open');
+  }, 1000);
+}
+
+function gpstzAllow() {
+  document.getElementById('gpstz-overlay').classList.remove('open');
+  detectTzFromGPS(tz => {
+    const tzInfo = document.getElementById('setup-tz-info');
+    if (tzInfo) tzInfo.textContent = '✓ GPS: ' + tz;
+  });
+}
+
+function gpstzSkip() {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Rome';
+  saveTz(tz);
+  document.getElementById('gpstz-overlay').classList.remove('open');
+  showToast('✓ Fuso orario: ' + tz);
+}
+
+// ═══════════════════════════════════
+//  CLOCK INTEGRITY
+// ═══════════════════════════════════
+let _clockBlocked = false;
+let _clockCheckInProgress = false;
+let _pendingAfterClock = null;
+
+const TIME_APIS = [
+  () => fetch('https://worldtimeapi.org/api/ip', {cache:'no-store'})
+        .then(r=>r.json()).then(d=>new Date(d.utc_datetime).getTime()),
+  () => fetch('https://timeapi.io/api/Time/current/zone?timeZone=UTC', {cache:'no-store'})
+        .then(r=>r.json()).then(d=>new Date(d.dateTime+'Z').getTime()),
+];
+
+function saveLKGT(serverMs) {
+  localStorage.setItem('op_lkgt_ts',  String(serverMs));
+  localStorage.setItem('op_lkgt_loc', String(Date.now()));
+}
+
+async function silentLKGTAnchor() {
+  const lkgtLoc = parseInt(localStorage.getItem('op_lkgt_loc') || '0');
+  if (lkgtLoc && (Date.now() - lkgtLoc) < 3600000) return;
+  for (const fetcher of TIME_APIS) {
+    try { saveLKGT(await fetcher()); return; } catch(e) {}
+  }
+}
+
+function checkLKGTOffline() {
+  const lkgtTs  = parseInt(localStorage.getItem('op_lkgt_ts')  || '0');
+  const lkgtLoc = parseInt(localStorage.getItem('op_lkgt_loc') || '0');
+  if (!lkgtTs || !lkgtLoc) return null;
+  const tz = getDeviceTz();
+  const expectedNow  = lkgtTs + (Date.now() - lkgtLoc);
+  const deviceDate   = new Date().toLocaleDateString('sv-SE', {timeZone: tz});
+  const expectedDate = new Date(expectedNow).toLocaleDateString('sv-SE', {timeZone: tz});
+  if (deviceDate > expectedDate) {
+    return {
+      ok: false,
+      deviceStr:   new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),
+      expectedStr: new Date(expectedNow).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
+    };
+  }
+  return { ok: true };
+}
+
+async function checkClockBeforeReport(onOk) {
+  if (_clockCheckInProgress) return;
+  const tz = getDeviceTz();
+  const today = new Date().toLocaleDateString('sv-SE', {timeZone: tz});
+
+  for (const id of Object.keys(cantieri)) {
+    for (const r of (cantieri[id].reports || [])) {
+      if (r.data > today) {
+        showClockWarning(
+          'Data del dispositivo nel passato',
+          'Data attuale: ' + new Date().toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'}) +
+          '\nEsiste un report del: ' + new Date(r.data).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'}) +
+          '\nRipristina la data corretta nelle impostazioni del dispositivo.'
+        ); return;
+      }
+    }
+  }
+
+  if (!navigator.onLine) {
+    const lkgt = checkLKGTOffline();
+    if (lkgt === null) {
+      showClockWarning(
+        'Connessione internet richiesta',
+        'Per garantire l\'integrità delle date, è necessaria almeno una connessione internet al primo avvio.\n\nConnettiti e riprova.'
+      ); return;
+    }
+    if (!lkgt.ok) {
+      showClockWarning('Data dispositivo: ' + lkgt.deviceStr, 'Data attesa: ' + lkgt.expectedStr +
+        '\nL\'orologio sembra essere stato spostato avanti di almeno un giorno.'); return;
+    }
+    onOk(); return;
+  }
+
+  _clockCheckInProgress = true;
+  let serverTime = null;
+  for (const fetcher of TIME_APIS) {
+    try { serverTime = await fetcher(); break; } catch(e) {}
+  }
+  _clockCheckInProgress = false;
+
+  if (serverTime === null) { onOk(); return; }
+  saveLKGT(serverTime);
+
+  const serverDate = new Date(serverTime).toLocaleDateString('sv-SE', {timeZone: tz});
+  if (today > serverDate) {
+    showClockWarning(
+      'Data dispositivo: ' + new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),
+      'Data reale (server): ' + new Date(serverTime).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) +
+      '\nL\'orologio è avanti di almeno un giorno rispetto all\'ora reale.'
+    );
+  } else { onOk(); }
+}
+
+function showClockWarning(detail1, detail2) {
+  _clockBlocked = true;
+  const overlay = document.getElementById('clockwarn-overlay');
+  const isNoAnchor = detail1 === 'Connessione internet richiesta';
+  document.getElementById('cw-icon').textContent  = isNoAnchor ? '📡' : '🕐';
+  document.getElementById('cw-title').textContent = isNoAnchor ? 'Connessione richiesta' : 'Data o ora non corretta';
+  document.getElementById('cw-body').innerHTML = isNoAnchor
+    ? 'Per garantire l\'integrità delle date nei report ufficiali, è necessaria almeno una connessione internet al primo avvio.<br><br>Questa verifica avviene <strong>una sola volta</strong>.'
+    : 'L\'app verifica l\'ora reale dal server prima di creare un report.<br><br>È stata rilevata una discrepanza tra l\'orologio del dispositivo e l\'ora reale.';
+  document.getElementById('cw-detail').innerHTML =
+    detail1.replace(/\n/g,'<br>') + '<br><span style="opacity:.7">' + detail2.replace(/\n/g,'<br>') + '</span>';
+  document.getElementById('cw-hint').textContent = isNoAnchor
+    ? 'Connettiti a internet e premi "Ricontrolla".'
+    : 'Correggi la data/ora nelle impostazioni del dispositivo e riprova.';
+  overlay.classList.add('open');
+}
+
+function hideClockWarning() {
+  _clockBlocked = false;
+  document.getElementById('clockwarn-overlay').classList.remove('open');
+}
+
+async function retryClockCheck() {
+  document.getElementById('cw-detail').textContent = 'Verifica in corso…';
+  document.getElementById('cw-hint').textContent = '';
+  await checkClockBeforeReport(() => {
+    hideClockWarning();
+    if (_pendingAfterClock) { _pendingAfterClock(); _pendingAfterClock = null; }
+  });
+}
+
+// ═══════════════════════════════════
+//  AUTO-FIRMA
+// ═══════════════════════════════════
+function isReportLocked(r) {
+  return r.status === 'firmato' || r.status === 'firmato-auto';
+}
+
+function checkAutoFirma() {
+  const today = todayStr();
+  let autoFirmed = [];
+  Object.keys(cantieri).forEach(cid => {
+    (cantieri[cid].reports || []).forEach(r => {
+      if (r.data < today && r.status === 'aperto') {
+        r.status = 'firmato-auto';
+        r.firmatoAt = Date.now();
+        autoFirmed.push({cantiere: cantieri[cid].nome, data: r.data});
+      }
+    });
+  });
+  if (autoFirmed.length) {
+    saveAll();
+    showToast('🔒 ' + autoFirmed.length + ' report firmato automaticamente');
+    renderHome();
+    if (activeCantiere) { renderReportList(); updateFAB(); }
+  }
+}
+
+// ═══════════════════════════════════
+//  TIMESTAMP INTEGRITY
+// ═══════════════════════════════════
+function checkTimestampIntegrity(report) {
+  const lastTs = report.registro && report.registro.length
+    ? report.registro[report.registro.length - 1].ts
+    : (report.savedAt || 0);
+  const now = Date.now();
+  if (lastTs && now < lastTs - 60000) {
+    showToast('⚠️ Orologio del dispositivo non coerente — impossibile salvare');
+    return false;
+  }
+  return true;
+}
+
+// ═══════════════════════════════════
+//  FORM REPORT
+// ═══════════════════════════════════
+function newReport() {
+  const c = cantieri[activeCantiere];
+  const oggi = todayStr();
+  const existing = (c.reports||[]).find(r => r.data === oggi);
+  if (existing && isReportLocked(existing)) {
+    showToast('🔒 Report di oggi già firmato — non modificabile');
+    return;
+  }
+  if (existing) { editReport(existing.id); return; }
+  _pendingAfterClock = () => _doNewReport();
+  checkClockBeforeReport(() => _doNewReport());
+}
+
+function _doNewReport() {
+  editingReportId = null;
+  formPhotos = [];
+  resetForm();
+  document.getElementById('form-date-label').textContent =
+    new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+  showScreen('screen-report');
+  rilievaGPSReport(true);
+}
+
+function editReport(id) {
+  const c = cantieri[activeCantiere];
+  const r = (c.reports||[]).find(x => x.id === id);
+  if (!r) return;
+  if (isReportLocked(r)) { showToast('🔒 Report firmato — non modificabile'); return; }
+  const oggi = todayStr();
+  if (r.data !== oggi) { showToast('⚠️ Puoi modificare solo il report di oggi'); return; }
+  editingReportId = id;
+  document.getElementById('f-ore').value = r.ore || '';
+  document.getElementById('f-lavori').value = r.lavori || '';
+  document.getElementById('f-note').value = r.note || '';
+  document.getElementById('form-date-label').textContent =
+    new Date(r.data).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+  renderMateriali(r.materiali || []);
+  loadPhotosIDB(id).then(photos => { formPhotos = photos || []; renderPhotoGrid(); });
+  setGpsFieldFromReport(r.gps || null);
+  showScreen('screen-report');
+}
+
+function resetForm() {
+  document.getElementById('f-ore').value = '';
+  document.getElementById('f-lavori').value = '';
+  document.getElementById('f-note').value = '';
+  renderMateriali([]);
+  formPhotos = [];
+  renderPhotoGrid();
+  gpsReport = null;
+  setGpsFieldFromReport(null);
+}
+
+// Materiali
+let materialiList = [];
+function renderMateriali(list) {
+  materialiList = list || [];
+  const el = document.getElementById('mat-list');
+  el.innerHTML = materialiList.map((m,i) => `
+    <div class="mat-item">
+      <input type="text" value="${esc(m)}" placeholder="es. cemento 2 sacchi" oninput="materialiList[${i}]=this.value">
+      <button class="mat-del" onclick="delMateriale(${i})"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`).join('');
+}
+function addMateriale() { materialiList.push(''); renderMateriali(materialiList); setTimeout(()=>{ const inputs=document.querySelectorAll('.mat-item input'); if(inputs.length) inputs[inputs.length-1].focus(); },50); }
+function delMateriale(i) { materialiList.splice(i,1); renderMateriali(materialiList); }
+
+// Foto
+function renderPhotoGrid() {
+  const grid = document.getElementById('photo-grid');
+  const count = document.getElementById('foto-count');
+  count.textContent = formPhotos.length ? '('+formPhotos.length+')' : '';
+  const thumbs = formPhotos.map((p,i) => `
+    <div class="photo-thumb">
+      <img src="${p.dataUrl}" loading="lazy">
+      <button class="photo-del" onclick="delPhoto(${i})">✕</button>
+      <div class="photo-time">🕐 ${p.ora || '—'}</div>
+    </div>`).join('');
+  grid.innerHTML = thumbs;
+}
+function delPhoto(i) { formPhotos.splice(i,1); renderPhotoGrid(); }
+async function handlePhotos(input) {
+  const files = Array.from(input.files);
+  const tz = getDeviceTz();
+  for (const f of files) {
+    const dataUrl = await compressPhoto(f);
+    const ora = new Date().toLocaleTimeString('it-IT', {timeZone: tz, hour: '2-digit', minute: '2-digit'});
+    formPhotos.push({dataUrl, name: f.name, ora});
+  }
+  renderPhotoGrid();
+  input.value = '';
+}
+function compressPhoto(file) {
+  return new Promise(res => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const max = 1200;
+      let w = img.width, h = img.height;
+      if (w > max || h > max) { if(w>h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;} }
+      const c = document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      res(c.toDataURL('image/jpeg',0.75));
+    };
+    img.src = url;
+  });
+}
+
+// SAVE
+function saveReport() {
+  if (!activeCantiere) return;
+  const oggi = todayStr();
+
+  if (editingReportId) {
+    const c = cantieri[activeCantiere];
+    const existing = (c.reports||[]).find(r => r.id === editingReportId);
+    if (existing && !checkTimestampIntegrity(existing)) return;
+  }
+
+  const ore    = document.getElementById('f-ore').value.trim();
+  const lavori = document.getElementById('f-lavori').value.trim();
+  const note   = document.getElementById('f-note').value.trim();
+  const mat    = materialiList.filter(m => m.trim());
+  const now    = Date.now();
+  const tz     = getDeviceTz();
+  const oraStr = new Date().toLocaleTimeString('it-IT',{timeZone:tz,hour:'2-digit',minute:'2-digit'});
+
+  const id = editingReportId || now;
+  const c  = cantieri[activeCantiere];
+  if (!c.reports) c.reports = [];
+
+  if (editingReportId) {
+    const idx = c.reports.findIndex(r => r.id === editingReportId);
+    if (idx < 0) return;
+    const old = c.reports[idx];
+    if (old.data !== oggi) { showToast('⚠️ Puoi modificare solo il report di oggi'); return; }
+    const report = {...old, ore, lavori, note, materiali:mat, savedAt:now, gps: gpsReport || old.gps || null};
+    if (!report.registro) report.registro = [{ts: old.savedAt||now, ora:'—', note:'Creazione'}];
+    report.registro.push({ts: now, ora: oraStr, note: 'Modifica salvata'});
+    c.reports[idx] = report;
+  } else {
+    const report = {
+      id, data: oggi, savedAt: now,
+      ore, lavori, note, materiali: mat,
+      operaio: profile.nome || '—',
+      ruolo:   profile.ruolo || '—',
+      status:  'aperto',
+      gps: gpsReport || null,
+      registro: [{ts: now, ora: oraStr, note: 'Report creato'}]
+    };
+    c.reports.unshift(report);
+  }
+
+  savePhotosIDB(id, formPhotos);
+  saveAll();
+  editingReportId = id;
+  updateFAB();
+  renderReportList();
+  showToast('✓ Bozza salvata');
+}
+
+// ═══════════════════════════════════
+//  FIRMA
+// ═══════════════════════════════════
+function openFirma() {
+  const c = cantieri[activeCantiere];
+  const savedR = editingReportId ? (c.reports||[]).find(x => x.id === editingReportId) : null;
+
+  // Report non ancora salvato → blocca e chiedi di salvare prima
+  if (!savedR) {
+    showToast('💾 Prima di firmare, salva il report');
+    return;
+  }
+
+  const mancano = [];
+  if (!savedR.ore || !String(savedR.ore).trim()) mancano.push('ore lavorate');
+  if (!savedR.lavori || !savedR.lavori.trim())   mancano.push('descrizione lavori');
+  const mat = (savedR.materiali||[]).filter(m => m && m.trim());
+  if (!mat.length) mancano.push('materiali usati');
+  if (mancano.length) {
+    showToast('⚠️ Manca: ' + mancano.join(', '));
+    return;
+  }
+  loadPhotosIDB(editingReportId).then(photos => {
+    if (!photos || !photos.length) {
+      showToast('⚠️ Aggiungi almeno una foto al report'); return;
+    }
+    if (!savedR.gps && !gpsReport) {
+      document.getElementById('gps-avviso-overlay').classList.add('open');
+      return;
+    }
+    _apriOverlayFirma();
+  });
+}
+
+function _apriOverlayFirma() {
+  document.getElementById('firma-nome').value = profile.nome || '';
+  document.getElementById('firma-overlay').classList.add('open');
+}
+function closeFirma() { document.getElementById('firma-overlay').classList.remove('open'); }
+function closeFirmaIfBg(e) { if(e.target===document.getElementById('firma-overlay')) closeFirma(); }
+
+async function doFirma() {
+  const nome = document.getElementById('firma-nome').value.trim();
+  if (!nome) { showToast('⚠️ Inserisci il tuo nome'); return; }
+
+  saveReport();
+  const id = editingReportId;
+  const c = cantieri[activeCantiere];
+  const r = (c.reports||[]).find(x => x.id === id);
+  if (!r) return;
+
+  r.status = 'firmato';
+  r.firmatoDa = nome;
+  r.firmato_ts = Date.now();
+  saveAll();
+  closeFirma();
+
+  const photos = await loadPhotosIDB(id);
+  const payload = {
+    _type: 'operaio_report',
+    _version: APP_VERSION,
+    cantiere_id: activeCantiere,
+    cantiere_nome: c.nome,
+    report: { ...r, _photos: photos }
+  };
+  const json = JSON.stringify(payload);
+  // ── NOME FILE: estensione .txt invece di .json ──
+  // WhatsApp su Android blocca i file .json — .txt viene accettato senza problemi.
+  // Il contenuto è identico (JSON valido), l'app capocantiere legge entrambe le estensioni.
+  const fname = 'report_' + (profile.ruolo||'operaio').replace(/\s+/g,'_').toLowerCase() + '_' + r.data + '.txt';
+  await saveFileIDB(id, json);
+
+  showToast('✓ Report firmato!');
+  updateFAB();
+  renderReportList();
+  editingReportId = null;
+
+  setTimeout(async () => {
+    const blob = new Blob([json], {type:'text/plain'});
+    await inviaReport(r, photos, blob, fname);
+    goBack('screen-cantiere');
+  }, 500);
+}
+
+// ═══════════════════════════════════
+//  CHANGELOG / UPDATE POPUP
+// ═══════════════════════════════════
+const OP_CHANGELOG = {
+  '1.2.0': {
+    title: '📐 Layout & UX migliorata',
+    items: [
+      'Bottoni Salva/Firma sempre visibili senza scorrere',
+      'Nuova opzione "Scatta foto" direttamente dalla fotocamera',
+      'Prima di firmare devi salvare il report (messaggio di avviso)',
+      'Report firmati: tocca per vedere opzioni (Visualizza / Invia / Elimina)'
+    ]
+  },
+  '1.1.0': {
+    title: '📎 Fix condivisione file',
+    items: [
+      'File report rinominato in .txt: WhatsApp ora lo accetta e allega correttamente',
+      'Il contenuto del file rimane identico — l\'app capocantiere lo legge senza problemi',
+      'Condivisione via Web Share API migliorata su Android Chrome PWA',
+      'Messaggio di fallback più chiaro se WhatsApp non supporta allegati diretti'
+    ]
+  },
+  '1.0.9': {
+    title: '🔧 Miglioramenti',
+    items: [
+      'Invio report: scegli tra WhatsApp o Email',
+      'Messaggio errore preciso su cosa manca alla firma',
+      'Report firmati: solo visualizzazione e reinvio',
+      'Rilevamento GPS automatico all\'apertura report',
+      'Pulizia automatica report firmati dopo 7 giorni'
+    ]
+  }
+};
+
+function opHandleNewVersion(version, changelog) {
+  const seenKey = 'op_seen_v' + version;
+  if (localStorage.getItem(seenKey)) {
+    // Già visto: attiva silenziosamente il SW in waiting
+    if (_opPendingSwReg) {
+      _opPendingSwReg.postMessage({ type: 'SKIP_WAITING' });
+      _opPendingSwReg = null;
+    }
+    return;
+  }
+  const cl = changelog || OP_CHANGELOG[version] || null;
+  if (!cl) {
+    // Versione senza changelog: segna come vista e attiva SW
+    localStorage.setItem(seenKey, '1');
+    if (_opPendingSwReg) {
+      _opPendingSwReg.postMessage({ type: 'SKIP_WAITING' });
+      _opPendingSwReg = null;
+    }
+    return;
+  }
+  document.getElementById('op-update-ver').textContent = 'Versione ' + version;
+  document.getElementById('op-update-title').textContent = cl.title || 'Aggiornamento';
+  document.getElementById('op-update-items').innerHTML = (cl.items||[]).map(i => '<div class="op-update-item">' + i + '</div>').join('');
+  document.getElementById('op-update-overlay').classList.add('open');
+}
+
+function opDismissUpdate() {
+  document.getElementById('op-update-overlay').classList.remove('open');
+  const ver = document.getElementById('op-update-ver').textContent.replace('Versione ','').trim();
+  if (ver) localStorage.setItem('op_seen_v' + ver, '1');
+  // Attiva il nuovo SW DOPO che l'utente ha letto le novità → poi reload
+  if (_opPendingSwReg) {
+    _opPendingSwReg.postMessage({ type: 'SKIP_WAITING' });
+    _opPendingSwReg = null;
+  }
+}
+
+// ── Stato condivisione corrente ──
+let _shareState = null;
+
+function buildShareTesto(r, photos) {
+  const c = cantieri[activeCantiere];
+  const dateStr = new Date(r.data).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const mat = (r.materiali||[]).filter(m=>m&&m.trim());
+  return [
+    '📋 *REPORT GIORNALIERO*',
+    '',
+    '👷 ' + (r.operaio||profile.nome||'—') + ' — ' + (r.ruolo||profile.ruolo||'—'),
+    '🏗️ ' + (c.nome||'—'),
+    '📅 ' + dateStr,
+    '⏱️ Ore: *' + (r.ore||'—') + '*',
+    '',
+    '🔨 *Lavori eseguiti:*',
+    r.lavori||'—',
+    mat.length ? ('🧱 *Materiali:* ' + mat.join(', ')) : '',
+    r.note ? ('📝 *Note:* ' + r.note) : '',
+    photos && photos.length ? ('📷 ' + photos.length + ' foto nel file allegato') : '',
+    '',
+    '📎 *Allega il file .txt ricevuto nell\'app Report Cantiere per importarlo.*',
+    '— v' + APP_VERSION
+  ].filter(x => x !== null && x !== undefined && x !== '').join('\n');
+}
+
+function openShareSheet(r, photos, blob, fname) {
+  _shareState = {r, photos, blob, fname};
+  const sub = document.getElementById('share-sheet-sub');
+  if (sub) sub.textContent = (r.operaio||profile.nome||'—') + ' · ' + r.data;
+  document.getElementById('share-overlay').classList.add('open');
+}
+
+function closeShareSheet(e) {
+  if (e && e.target !== document.getElementById('share-overlay')) return;
+  document.getElementById('share-overlay').classList.remove('open');
+}
+
+async function doShareViaWhatsApp() {
+  document.getElementById('share-overlay').classList.remove('open');
+  if (!_shareState) return;
+  const {r, photos, blob, fname} = _shareState;
+  const testo = buildShareTesto(r, photos);
+  const file = new File([blob], fname, {type:'text/plain'});
+
+  // Tenta Web Share API con allegato file .txt
+  if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+    try {
+      await navigator.share({ title: fname, text: testo, files: [file] });
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return;
+      // share fallita: continua con fallback
+    }
+  }
+
+  // Fallback: scarica il file .txt + apre WhatsApp con testo
+  _downloadBlob(blob, fname);
+  const istruzioni = '\n\n📎 File salvato: ' + fname + '\nVai su Download, poi allega il file a questa chat WhatsApp.';
+  const encoded = encodeURIComponent(testo + istruzioni);
+  setTimeout(() => {
+    window.open('https://wa.me/?text=' + encoded, '_blank') || (window.location.href = 'https://wa.me/?text=' + encoded);
+  }, 800);
+}
+
+function _downloadBlob(blob, fname) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+async function doShareViaMail() {
+  document.getElementById('share-overlay').classList.remove('open');
+  if (!_shareState) return;
+  const {r, photos, blob, fname} = _shareState;
+  const c = cantieri[activeCantiere];
+  const testo = buildShareTesto(r, photos);
+  const subject = encodeURIComponent('Report ' + (r.operaio||profile.nome||'—') + ' — ' + r.data + ' — ' + (c.nome||''));
+
+  const file = new File([blob], fname, {type:'text/plain'});
+  if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+    try {
+      await navigator.share({ title: fname, text: testo, files: [file] });
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+  // Fallback: scarica file .txt + apre client mail
+  _downloadBlob(blob, fname);
+  const body = encodeURIComponent(testo + '\n\n📎 File salvato: ' + fname + '\nAllega il file appena scaricato a questa email.');
+  setTimeout(() => { window.location.href = 'mailto:?subject=' + subject + '&body=' + body; }, 800);
+}
+
+async function inviaReport(r, photos, blob, fname) {
+  openShareSheet(r, photos, blob, fname);
+}
+
+// ═══════════════════════════════════
+//  VIEW REPORT
+// ═══════════════════════════════════
+let _raCurrentId = null;
+
+async function viewReport(id) {
+  const c = cantieri[activeCantiere];
+  const r = (c.reports||[]).find(x => x.id === id);
+  if (!r) return;
+
+  const signed = r.status === 'firmato' || r.status === 'firmato-auto';
+
+  // Report firmato → bottom sheet con opzioni
+  if (signed) {
+    _raCurrentId = id;
+    const dateStr = new Date(r.data).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+    document.getElementById('ra-title').textContent = dateStr;
+    const sub = r.status === 'firmato'
+      ? '✓ Firmato da ' + (r.firmatoDa || '—')
+      : '🔒 Firma automatica';
+    document.getElementById('ra-sub').textContent = sub + (r.ore ? ' · ' + r.ore + ' ore' : '');
+    document.getElementById('report-actions-overlay').classList.add('open');
+    return;
+  }
+
+  // Report aperto → vai direttamente alla schermata di modifica/view
+  await _openViewScreen(id);
+}
+
+function closeReportActionsSheet(e) {
+  if (e && e.target !== document.getElementById('report-actions-overlay')) return;
+  document.getElementById('report-actions-overlay').classList.remove('open');
+}
+
+async function raVisualizza() {
+  document.getElementById('report-actions-overlay').classList.remove('open');
+  await _openViewScreen(_raCurrentId);
+}
+
+async function raInvia() {
+  document.getElementById('report-actions-overlay').classList.remove('open');
+  await reshareReport(_raCurrentId);
+}
+
+async function raElimina() {
+  document.getElementById('report-actions-overlay').classList.remove('open');
+  if (!_raCurrentId) return;
+  const c = cantieri[activeCantiere];
+  const r = (c.reports||[]).find(x => x.id === _raCurrentId);
+  if (!r) return;
+  const dateStr = new Date(r.data).toLocaleDateString('it-IT',{day:'numeric',month:'long'});
+  if (!confirm('Eliminare il report del ' + dateStr + '? L\'operazione non è reversibile.')) return;
+  await deletePhotosIDB(_raCurrentId);
+  await deleteFileIDB(_raCurrentId);
+  c.reports = c.reports.filter(x => x.id !== _raCurrentId);
+  saveAll();
+  renderReportList();
+  updateFAB();
+  showToast('🗑 Report eliminato');
+  _raCurrentId = null;
+}
+
+async function _openViewScreen(id) {
+  const c = cantieri[activeCantiere];
+  const r = (c.reports||[]).find(x => x.id === id);
+  if (!r) return;
+
+  document.getElementById('view-date-label').textContent = new Date(r.data).toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+
+  const photos = await loadPhotosIDB(id);
+  const body = document.getElementById('view-body');
+  const signed = r.status === 'firmato' || r.status === 'firmato-auto';
+  let html = '';
+
+  if (r.status === 'firmato' && r.firmatoDa) {
+    html += `<div class="firma-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg><div class="firma-badge-text"><strong>Firmato da ${esc(r.firmatoDa)}</strong><br>${new Date(r.firmato_ts).toLocaleDateString('it-IT',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}</div></div>`;
+  } else if (r.status === 'firmato-auto') {
+    html += `<div class="firma-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg><div class="firma-badge-text"><strong>Firma automatica</strong><br>Firmato automaticamente alla mezzanotte</div></div>`;
+  }
+
+  html += `<div class="view-card">
+    <div class="view-card-title">Riepilogo</div>
+    <div class="view-field"><div class="vf-label">Ore lavorate</div><div class="vf-value big">${esc(r.ore)||'—'}</div></div>
+    <div class="view-field"><div class="vf-label">Operaio</div><div class="vf-value">${esc(r.operaio)} · ${esc(r.ruolo)}</div></div>
+  </div>`;
+
+  if (r.lavori) html += `<div class="view-card"><div class="view-card-title">Lavori eseguiti</div><div class="vf-value" style="line-height:1.6;white-space:pre-wrap;">${esc(r.lavori)}</div></div>`;
+  if (r.note) html += `<div class="view-card"><div class="view-card-title">Note libere</div><div class="vf-value" style="line-height:1.6;white-space:pre-wrap;">${esc(r.note)}</div></div>`;
+
+  if (r.materiali && r.materiali.length) {
+    html += `<div class="view-card"><div class="view-card-title">Materiali usati</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">${r.materiali.map(m=>`<span class="mat-chip">${esc(m)}</span>`).join('')}</div></div>`;
+  }
+
+  if (photos && photos.length) {
+    html += `<div class="view-card"><div class="view-card-title">Foto (${photos.length})</div><div class="view-photos" style="margin-top:6px;">${photos.map(p=>`<div class="view-photo"><img src="${p.dataUrl}" loading="lazy"></div>`).join('')}</div></div>`;
+  }
+
+  body.innerHTML = html;
+
+  const actions = document.getElementById('view-actions');
+  if (r.status === 'firmato' || r.status === 'firmato-auto') {
+    actions.innerHTML = `<button class="btn-primary" onclick="reshareReport('${id}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" width="16" height="16"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      Invia report
+    </button>`;
+  } else {
+    actions.innerHTML = `
+      <button class="btn-secondary" style="flex:1;" onclick="editReport('${id}');goBack('screen-cantiere');">Modifica</button>
+      <button class="btn-primary" style="flex:2;" onclick="viewOpenFirma('${id}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" width="16" height="16"><path d="M20 6L9 17l-5-5"/></svg>
+        Firma e invia
+      </button>`;
+  }
+
+  showScreen('screen-view');
+}
+
+function viewOpenFirma(id) {
+  editingReportId = id;
+  openFirma();
+}
+
+async function reshareReport(id) {
+  const c = cantieri[activeCantiere];
+  const r = (c.reports||[]).find(x => x.id === id);
+  if (!r) return;
+  const photos = await loadPhotosIDB(id);
+  const fname = 'report_'+(profile.ruolo||'operaio').replace(/\s+/g,'_').toLowerCase()+'_'+r.data+'.txt';
+  let json = await loadFileIDB(id);
+  if (!json) {
+    const payload = { _type:'operaio_report', _version:APP_VERSION, cantiere_id:activeCantiere, cantiere_nome:c.nome, report:{...r, _photos:photos} };
+    json = JSON.stringify(payload);
+    await saveFileIDB(id, json);
+  }
+  const blob = new Blob([json], {type:'text/plain'});
+  await inviaReport(r, photos, blob, fname);
+}
+
+// ═══════════════════════════════════
+//  SETUP / PROFILO
+// ═══════════════════════════════════
+function openSetup() {
+  document.getElementById('setup-nome').value = profile.nome || '';
+  document.getElementById('setup-role-custom').value = '';
+  selectedRole = profile.ruolo || '';
+  document.querySelectorAll('.role-btn').forEach(b => {
+    b.classList.toggle('sel', b.textContent.includes(selectedRole));
+  });
+  const tzInfo = document.getElementById('setup-tz-info');
+  if (tzInfo) tzInfo.textContent = getDeviceTz();
+  showScreen('screen-setup');
+}
+
+function selRole(btn, r) {
+  selectedRole = r;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('setup-role-custom').value = '';
+}
+
+function saveProfile() {
+  const nome = document.getElementById('setup-nome').value.trim();
+  const custom = document.getElementById('setup-role-custom').value.trim();
+  const ruolo = custom || selectedRole;
+  if (!nome) { showToast('⚠️ Inserisci il tuo nome'); return; }
+  if (!ruolo) { showToast('⚠️ Seleziona o scrivi il tuo ruolo'); return; }
+  const tz = profile.timezone || getDeviceTz();
+  profile = { nome, ruolo, timezone: tz };
+  saveAll();
+  renderHome();
+  showToast('✓ Profilo salvato');
+  goBack('screen-home');
+  if (!profile.timezone || profile.timezone === Intl.DateTimeFormat().resolvedOptions().timeZone) {
+    checkFirstLaunchTimezone();
+  }
+}
+
+// ═══════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+</script>
+</body>
+</html>
